@@ -42,6 +42,10 @@ class Field:
         for danger in self._danger_objects:
             self._danger_cells.extend(danger.pull(time))
 
+    @property
+    def dim(self):
+        return (self._dim_x, self._dim_y)
+
     def available_cells(self, coord):
         blocker = self._blocker_cells
         danger = self._danger_cells
