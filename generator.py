@@ -45,7 +45,7 @@ class Generator:
             object_count = randrange(*range_)
             funcs = [self._make_laser, self._make_spear, self._make_brick]
             for _ in range(object_count):
-                print len(self._filled_cells), '/', self._x * self._y, '--', _
+                # print len(self._filled_cells), '/', self._x * self._y, '--', _
                 args = choice(funcs)()
                 # print _, args
                 field.add_object(self.rand_coord, *args)
