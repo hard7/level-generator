@@ -62,7 +62,7 @@ class Generator:
         return tuple((Type.BRICK, None))
 
     def _make_periods(self):
-        on, off = randrange(1, 5), randrange(1, 5)
+        on, off = randrange(1, 4), randrange(1, 4)
         return tuple((on, off, randrange(on+off)))
 
     def _make_dirs(self):

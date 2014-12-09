@@ -1,6 +1,7 @@
 __author__ = 'anosov'
 
 from danger import Type, Dir, Danger
+import string
 
 class Field:
     def __init__(self, x, y):
@@ -78,6 +79,63 @@ class Field:
 
     def _is_blocker(self, coord):
         return coord in self._blocker_cells or not self._in_range(coord)
+
+    def to_string(self, name='noname'):
+        str = ''
+        str += name + '\n'
+        str += "%i %i" % (self._dim_x, self._dim_y)
+        front_index, back_index = 0, 25
+        index = 0
+        postfix = ''
+        art = [['.' for _ in xrange(self._dim_x)] for _ in xrange(self._dim_y)]
+        for x, y in self._blocker_cells:
+            art[y][x] = '#'
+        for dang in self._danger_objects:
+            x, y = dang.coord
+            if dang.type == Type.LASER:
+                art[y][x] = string.ascii_uppercase[front_index]
+                on, off, offset = dang.on_period, dang.off_period, dang.offset
+                flag = 'on' if offset < on else 'off'
+                postfix += '%s:laser %s %s %i %i %i \n' % \
+                           (art[y][x], self._dirs_to_string(dang.dirs), flag, on, off, offset % on)
+                index += 1
+                front_index += 1
+            elif dang.type == Type.SPEAR:
+                art[y][x] = string.ascii_uppercase[back_index]
+                on, off, offset = dang.on_period, dang.off_period, dang.offset
+                offset_ = offset if offset < on else offset - on
+                flag = 'on' if offset < on else 'off'
+                postfix += '%s:spear %s %i %i %i \n' % \
+                           (art[y][x], flag, on, off, offset_)
+                index += 1
+                back_index -= 1
+        x, y = self._start
+        art[y][x] = 's'
+
+        x, y = self._finish
+        art[y][x] = 'f'
+
+        str += '\n'
+        str += '%s \n' % '\n'.join([''.join(row) for row in art][::-1])
+        str += '%i \n' % index
+        str += '%s \n' % postfix
+        return str
+
+    def _dirs_to_string(self, dirs):
+        conv = {Dir.UP: 'u', Dir.LEFT: 'l', Dir.DOWN: 'd', Dir.RIGHT: 'r'}
+        return ''.join([conv[dir_] for dir_ in dirs])
+
+    def trace(self):
+        print 'dim: ', self._dim_x, self._dim_y
+        print '_blocker_cells', self._blocker_cells
+        for dan in self._danger_objects:
+            print 'Danger %i (%i %i %i)' % (dan.type,
+                dan.on_period,
+                dan.off_period,
+                dan.offset)
+            print dan.dirs
+            print dan.danger_cells
+
 
 
 if __name__ == '__main__':

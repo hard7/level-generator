@@ -27,11 +27,12 @@ class Solver:
         while True:
             self._next_step()
             if not self._open_branches:
-                print 'fail', self._time
-                break
-            if self._target in [o.coord for o in self._open_branches]:
-                print 'win', self._time
-                break
+                # print 'fail', self._time
+                return None
+
+            target = [o for o in self._open_branches if o.coord == self._target]
+            if target:
+                return list(reversed(self._path(target[0])))
 
     def _next_step(self):
         next_open = []
@@ -54,13 +55,5 @@ class Solver:
 
 
 from generator import Generator
-
-if __name__ == '__main__':
-    gen = Generator((3, 8), (3, 8))
-    gen.set_range_filling(40, 70)
-    for _ in range(10):
-        f = gen.make_field()
-        s = Solver(f)
-        s.run()
 
 
