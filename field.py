@@ -2,6 +2,8 @@ __author__ = 'anosov'
 
 from danger import Type, Dir, Danger
 import string
+import copy
+
 
 class Field:
     def __init__(self, x, y):
@@ -12,8 +14,16 @@ class Field:
         self._start = None
         self._finish = None
         self._time = None
+        self._backup_dict = None
+
+        self.free_cells = []
+        for i in xrange(x):
+            for j in xrange(y):
+                self.free_cells.append((i, j))
+
 
     def add_object(self, coord, type_, periods=None, dirs=None):
+        self.free_cells.remove(coord)
         if type_ == Type.HERO:
             self._start = coord
         elif type_ == Type.FINISH:
@@ -28,11 +38,24 @@ class Field:
             self._danger_objects.append(danger)
             self._blocker_cells.append(coord)
 
-    def get_finish(self):
-        return self._finish
+    def get_free_cells(self):
+        all = [(i, j) for i in xrange(self._dim_x) for j in xrange(self._dim_y)]
+        print all
 
-    def get_start(self):
-        return self._start
+    def add_group(self, coords, *args, **kwargs):
+        for c in coords:
+            self.add_object(c, *args, **kwargs)
+
+    def save_backup(self):
+        self._backup_dict = copy.deepcopy(self.__dict__)
+
+    def load_backup(self):
+        assert self._backup_dict is not None
+        self.__dict__ = self._backup_dict
+        self.save_backup()
+
+    get_start = lambda self: self._start
+    get_finish = lambda self: self._finish
 
     def set_time(self, time):
         if self._time == time:
@@ -43,9 +66,7 @@ class Field:
         for danger in self._danger_objects:
             self._danger_cells.extend(danger.pull(time))
 
-    @property
-    def dim(self):
-        return (self._dim_x, self._dim_y)
+    dim = property(lambda self: (self._dim_x, self._dim_y))
 
     def available_cells(self, coord):
         blocker = self._blocker_cells

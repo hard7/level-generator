@@ -1,6 +1,7 @@
 __author__ = 'anosov'
 
 from field import Field
+from itertools import combinations
 
 
 class Node:
@@ -9,51 +10,70 @@ class Node:
         self.children = None
         self.coord = coord
 
-
-class Solver:
-    def __init__(self, field):
-        self._field = field
-        self._root = field.get_start()
-
-
-        root = Node(None, field.get_start())
-        self._open_branches = [root]
-        self._graph = [root]
-
-        self._time = 0
-        self._target = field.get_finish()
-
-    def run(self):
-        while True:
-            self._next_step()
-            if not self._open_branches:
-                # print 'fail', self._time
-                return None
-
-            target = [o for o in self._open_branches if o.coord == self._target]
-            if target:
-                return list(reversed(self._path(target[0])))
-
-    def _next_step(self):
-        next_open = []
-        self._time += 1
-        self._field.set_time(self._time)
-        for open_ in self._open_branches:
-            result = self._field.available_cells(open_.coord)
-            path = self._path(open_)
-            nodes = [Node(open_, coord) for coord in result if coord not in path]
-            open_.children = nodes
-            next_open.extend(nodes)
-        self._open_branches = next_open
-
-    def _path(self, node):
-        res = [node.coord]
+    def path(self):
+        node = self
+        path = [node.coord]
         while node.parent:
             node = node.parent
-            res.append(node.coord)
-        return res
+            path.append(node.coord)
+        return path[::-1]
 
 
-from generator import Generator
+def find_passed_cells(paths):
+    passed = {}
+    for path_count, path in enumerate(paths):
+        for step_count, coord in enumerate(path):
+            if coord not in passed:
+                passed[coord] = []
+            passed[coord].append(path_count)
+    return passed
 
 
+def find_option(passed_cells):
+    res = {}
+    for key, values in passed_cells.iteritems():
+        res[key] = set(combinations(values, 3))
+    return res
+
+def find_paths_to_finish(field):
+    return Solver(field).run()
+
+
+def find_crossing_cells(paths, indexes=None):
+    if indexes:
+        paths = [paths[i] for i in indexes]
+    return list(reduce(lambda res, x: set(res)-set(x), paths))
+
+
+class Solver(object):
+    def __init__(self, field):
+        assert isinstance(field, Field)
+        self.field = field
+        self._root = field.get_start()
+        root = Node(None, field.get_start())
+        self._leafs = [root]
+        self.win_paths = []
+
+    def run(self, t=1):
+        assert t < 100
+        future_leafs = []
+        avc = self.field.available_cells
+        not_in_path = lambda arg: arg not in leaf.path()
+        self.field.set_time(t)
+        for leaf in self._leafs:
+            available_coords = filter(not_in_path, avc(leaf.coord))
+            children = [Node(leaf, c) for c in available_coords]
+            leaf.children = children
+            future_leafs.extend(children)
+
+        self._leafs = []
+        for future_leaf in future_leafs:
+            if future_leaf.coord == self.field.get_finish():
+                self.win_paths.append(future_leaf.path())
+            else:
+                self._leafs.append(future_leaf)
+
+        if self._leafs:
+            return self.run(t+1)
+        else:
+            return self.win_paths
