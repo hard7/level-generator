@@ -7,6 +7,7 @@ class Type:
     BRICK = 3
     LASER = 4
     SPEAR = 5
+    STAR = 6
 
 
 class Dir:
@@ -14,7 +15,7 @@ class Dir:
     RIGHT = (1, 0)
     UP = (0, 1)
     DOWN = (0, -1)
-    ALL = LEFT, RIGHT, UP, DOWN
+    ALL = UP, RIGHT, LEFT, DOWN
 
     @staticmethod
     def move(coord, dir_):
@@ -35,3 +36,10 @@ class Danger:
         mod = (time + self.offset) % (self.on_period + self.off_period)
         cond = mod < self.on_period
         return self.danger_cells if cond else []
+
+    def get_period(self):
+        on, off = self.on_period, self.off_period
+        state = 'on' if self.offset < on else 'off'
+        period = self.offset % on
+        return {'onPeriod': on, 'offPeriod': off,
+                'currentState': state, 'currentPeriod': period}
