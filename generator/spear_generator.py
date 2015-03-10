@@ -1,39 +1,144 @@
-__author__ = 'anosov'
-
 from generator import Generator
-from field import Field, Type
+from field import Type
 from solver import *
+from danger import Danger
+
 from copy import deepcopy
-from pprint import pprint
-from itertools import product, chain
+from random import choice
+from itertools import product, chain, count, izip, compress
 from operator import add, sub
-import random
 from functools import partial
-
-def find_correct_paths_and_starts(field):
-    assert isinstance(field, Field)
-
-    paths_to_finish = find_paths_to_finish(field)
-    pc = find_passed_cells(paths_to_finish)
-    pc.pop(field.get_start(), None)
-    o = find_option(pc)
-    print o
-
-    return 3, 3
+from utils import *
+import collections
 
 
-class GeneratorV2(Generator):
+class SpearGenerator(Generator):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
-        self._backup = None
 
-    def make_field(self, prop=None):
+    def make_field(self, p=None):
+        field = None
+        while not field:
+            field = self._make_field(p)
+            if field and len(Solver(field).run()) > 5:
+                field = None
+        return field
+
+    def _make_field(self, p=None):
+        start = self._choice_start_position()
+        finish = get_reflection(self.dim, start)
+
+        field = Field(self.dim)
+        field.add_object(start, Type.START)
+        field.add_object(finish, Type.FINISH)
+        field.save_backup()
+
+        all_ans = []
+        while len(all_ans) < 26 or len(all_ans) > 50:
+            wg = WallGen(self.dim, start, finish)
+            wg.gen_loop()
+            wg.gen_loop()
+            wg.gen_bridge()
+
+            field.load_backup()
+            field.add_group(wg.get_bricks(), Type.BRICK)
+            all_ans = Solver(field).run()
+
+        bonus = None
+        c0 = count(42, -1)
+        while not bonus and c0.next():
+            _size = len(all_ans) / 3
+            ans = map(choice, izip(*[iter(all_ans)]*_size))
+            x, y, z = map(set, [a[3:-2] for a in ans])
+            _bonus = (z & y & x), (z & y - x), (z - y - x)
+            if all(map(len, _bonus)):
+                bonus = map(choice_from_set, _bonus)
+
+        if not bonus:
+            return None
+
+        field.add_group(bonus, Type.BONUS)
+        self._spear_filling(field, ans)
+        return field
+
+    def _spear_filling(self, field, paths):
+        field.save_backup()
+        good_route = self.paths_to_map(paths)
+
+        best_field_dict = None
+        best_account = 100500
+
+        c0 = count(10, -1)
+        while best_account != 3 and c0.next():
+            bad_paths = Solver(field).run()
+            map(bad_paths.remove, paths)
+
+            c1 = count(42, -1)
+            while c1.next():
+                bad_route = self.paths_to_map(bad_paths)
+                coord, times = self.put_spear(field, good_route, bad_route)
+                if coord is None:
+                    break
+                field.init()
+                closed = [path for path in bad_paths
+                          if coord in take_some(path, times)]
+                map(bad_paths.remove, closed)
+
+            sc = len(Solver(field).run())
+            if sc < best_account:
+                best_field_dict = deepcopy(field.__dict__)
+                best_account = sc
+            field.load_backup()
+        field.__dict__ = best_field_dict
+
+    @staticmethod
+    def put_spear(field, good, bad):
+        result = None
+        source = field.free_cells[:]
+        while not result and source:
+            coord = choice_and_pop(source)
+            good_per = good.get(coord, [])
+            bad_per = bad.get(coord, [])
+
+            if not bad_per:
+                continue
+
+            periods = Danger.make_all_period()
+            while not result and periods:
+                per = choice_and_pop(periods)
+                g = map(Danger.at_stake_wrap(per), good_per).count(True)
+                b = map(Danger.at_stake_wrap(per), bad_per).count(True)
+
+                dan = partial(filter, Danger.at_stake_wrap(per), bad_per)
+                result = dan() if (not g and b) else None
+
+        if not result and not source:
+            return None, None
+
+        field.add_object(coord, Type.SPEAR, per)
+        return coord, list(result)
+
+    @staticmethod
+    def paths_to_map(paths):
+        _map = collections.defaultdict(set)
+        src = chain(*map(enumerate, paths))
+        [_map[val].add(i) for i, val in src]
+        for key, val in _map.iteritems():
+            _map[key] = sorted(val)
+        return dict(_map)
+
+    def _choice_start_position(self):
+        wg = WallGen(self.dim, None, None)
+        start = wg.fill(0, 0) - wg.fill(1, 1) - wg.corner(0, 0)
+        return choice_from_set(start)
+
+    def make_field_deprecated(self, prop=None):
         self.random_coord.clear()
         c = self.x_coord, self.y_coord
         field = Field(*c)
         h = self.random_coord.get_on_border()
         f = self.random_coord.get_reflection(h)
-        field.add_object(h, Type.HERO)
+        field.add_object(h, Type.START)
         field.add_object(f, Type.FINISH)
 
         field.save_backup()
@@ -71,14 +176,13 @@ class GeneratorV2(Generator):
         x, y = field.dim
         dirs = set(product(xrange(-1, 2), xrange(-1, 2)))
         add_ = lambda d: tuple(map(add, c, d))
-        rand_choice = lambda l: random.sample(l, 1)[0]
         # free = set(product(xrange(x), xrange(y)))
         # free.remove(field.get_start())
         # free.remove(field.get_finish())
         for _ in xrange(n):
             if not free:
                 return
-            c = rand_choice(free)
+            c = choice_from_set(free)
             busy = set(map(lambda d: add_(d), dirs))
             free -= busy
             field.add_object(c, Type.BRICK)
@@ -88,7 +192,6 @@ class GeneratorV2(Generator):
         all_dirs = set(product(xrange(-1, 2), repeat=2))
         four_dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         sum_ = lambda r, l: tuple(map(add, r, l))
-        rand_choice = lambda l: random.sample(l, 1)[0]
         # free = set(product(xrange(x), xrange(y)))
         # free.remove(field.get_start())
         # free.remove(field.get_finish())
@@ -96,11 +199,11 @@ class GeneratorV2(Generator):
             if not free:
                 print >> 'Free vector is empty'
                 return
-            c = rand_choice(free)
+            c = choice_from_set(free)
             candidate = free & set(map(partial(sum_, c), four_dirs))
             if not candidate:
                 raise Exception
-            c2 = rand_choice(candidate)
+            c2 = choice_from_set(candidate)
 
             busy = set(map(partial(sum_, c), all_dirs))
             busy |= set(map(partial(sum_, c2), all_dirs))
@@ -108,7 +211,8 @@ class GeneratorV2(Generator):
             free -= busy
             field.add_group([c, c2], Type.BRICK)
 
-rand_choice = lambda l: random.sample(l, 1)[0]
+
+
 _sum = lambda r, l: tuple(map(add, r, l))
 _bin_op = lambda opp, r, l: tuple(map(opp, r, l))
 
@@ -156,9 +260,9 @@ class WallGen(object):
             targets -= self.path_cells
             if not targets:
                 targets = self.fill(0, 0) & self.extend_4(self.start)
-                self.path_cells.add(rand_choice(targets))
+                self.path_cells.add(choice_from_set(targets))
             else:
-                brick = rand_choice(targets)
+                brick = choice_from_set(targets)
                 self.brick_cells.add(brick)
                 _path = self.extend_8(brick)
                 _path.remove(self.start)
@@ -169,9 +273,9 @@ class WallGen(object):
             targets -= self.path_cells
             if not targets:
                 targets = self.fill(0, 0) & self.extend_4(self.finish)
-                self.path_cells.add(rand_choice(targets))
+                self.path_cells.add(choice_from_set(targets))
             else:
-                brick = rand_choice(targets)
+                brick = choice_from_set(targets)
                 self.brick_cells.add(brick)
                 _path = self.extend_8(brick)
                 _path.remove(self.finish)
@@ -213,7 +317,7 @@ class WallGen(object):
 
         assert source
 
-        brick = rand_choice(source)
+        brick = choice_from_set(source)
         self.brick_cells.add(brick)
         self.path_cells |= self.extend_8(brick)
 
@@ -276,7 +380,7 @@ class PathGen_temp(object):
             source -= set([self.start, self.finish])
             source -= set(chain(*self.ponds))
 
-        brick = rand_choice(source)
+        brick = choice_from_set(source)
 
         loop = EmptyObject()
         loop.brick = brick
@@ -301,7 +405,7 @@ class PathGen_temp(object):
         block = [l.brick for l in self.loops] + [self.start, self.finish]
         valid = lambda arr, a, b_: set(arr) <= a and not (set(arr) & set(b_))
         res = filter(partial(valid, a=self.all_cells, b_=block), res)
-        r = list(rand_choice(res))
+        r = list(choice_from_set(res))
         self.ponds.append(r)
 
     def get_bricks(self):

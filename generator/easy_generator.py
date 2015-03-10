@@ -32,7 +32,7 @@ class EasyGenerator(Generator):
             hero_coord = self.random_coord.get_on_border()
             finish_coord = self.random_coord.get_reflection(hero_coord)
 
-            field.add_object(hero_coord, Type.HERO)
+            field.add_object(hero_coord, Type.START)
             field.add_object(finish_coord, Type.FINISH)
 
             cell_count = float(self.x_coord * self.y_coord)

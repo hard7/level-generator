@@ -1,45 +1,67 @@
 __author__ = 'anosov'
 
 
+import itertools
+from functools import partial
+
 class Type:
-    HERO = 1
+    START = 1
     FINISH = 2
     BRICK = 3
     LASER = 4
     SPEAR = 5
-    STAR = 6
+    BONUS = 6
 
 
 class Dir:
-    LEFT = (-1, 0)
-    RIGHT = (1, 0)
-    UP = (0, 1)
-    DOWN = (0, -1)
-    ALL = UP, RIGHT, LEFT, DOWN
+    ALL = (0, 1), (1, 0), (0, -1), (-1, 0)
+    UP, RIGHT, DOWN, LEFT = ALL
 
     @staticmethod
-    def move(coord, dir_):
-        return tuple((coord[0]+dir_[0], coord[1]+dir_[1]))
+    def move(coord, _dir):
+        return tuple(map(sum, zip(coord, _dir)))
+
+    @staticmethod
+    def move_generator(coord, _dir):
+        while True:
+            coord = Dir.move(coord, _dir)
+            yield coord
 
 
 class Danger:
-    def __init__(self, coord, type_, periods, dirs=None):
+    def __init__(self, coord, _type, periods, dirs=None):
         self.coord = coord
-        self.type = type_
+        self.type = _type
         self.on_period = periods[0]
         self.off_period = periods[1]
         self.offset = periods[2]
         self.dirs = dirs                # TODO
         self.danger_cells = []
 
+    @staticmethod
+    def at_stake(period, step):
+        on, off, offset = period
+        return (step + offset) % (on + off) < on
+
+    @staticmethod
+    def at_stake_wrap(period):
+        return partial(Danger.at_stake, period)
+
+
     def pull(self, time):
         mod = (time + self.offset) % (self.on_period + self.off_period)
-        cond = mod < self.on_period
-        return self.danger_cells if cond else []
+        return self.danger_cells if mod < self.on_period else []
 
-    def get_period(self):
+    def get_period_map(self):
         on, off = self.on_period, self.off_period
         state = 'on' if self.offset < on else 'off'
         period = self.offset % on
         return {'onPeriod': on, 'offPeriod': off,
                 'currentState': state, 'currentPeriod': period}
+
+    @staticmethod
+    def make_all_period(_max=3):
+        periods = itertools.product(range(1, _max+1), repeat=2)
+        periods = [map(lambda offset: (on, off, offset),
+                       xrange(on+off)) for on, off in periods]
+        return list(itertools.chain(*periods))

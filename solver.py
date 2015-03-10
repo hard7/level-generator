@@ -49,15 +49,15 @@ class Solver(object):
     def __init__(self, field):
         assert isinstance(field, Field)
         self.field = field
-        self._root = field.get_start()
-        root = Node(None, field.get_start())
+        self._root = field.start
+        root = Node(None, self._root)
         self._leafs = [root]
         self.win_paths = []
 
     def run(self, t=1):
         assert t < 100
         future_leafs = []
-        avc = self.field.available_cells
+        avc = self.field.available_for_move
         not_in_path = lambda arg: arg not in leaf.path()
         self.field.set_time(t)
         for leaf in self._leafs:
@@ -68,7 +68,7 @@ class Solver(object):
 
         self._leafs = []
         for future_leaf in future_leafs:
-            if future_leaf.coord == self.field.get_finish():
+            if future_leaf.coord == self.field.finish:
                 self.win_paths.append(future_leaf.path())
             else:
                 self._leafs.append(future_leaf)

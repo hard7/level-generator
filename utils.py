@@ -1,4 +1,6 @@
 import operator
+import random
+import itertools
 
 
 def _getattr(name, default=None):
@@ -17,3 +19,13 @@ def get_reflection(dim, coord):
     x, y = dim
     cx, cy = coord
     return x-cx-1, y-cy-1
+
+
+choice_from_set = lambda l: random.sample(l, 1)[0]
+
+
+def choice_and_pop(array):
+    item = random.choice(array)
+    array.remove(item)
+    return item
+
