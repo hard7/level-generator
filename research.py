@@ -1,30 +1,21 @@
 import itertools
+from collections import *
 from itertools import *
 from functools import partial
 from random import *
-
-def make_ticket():
-    _count = randrange(1, 10)
-    return set([randrange(100) for _ in xrange(_count)])
-
-def make_chest():
-    _count = randrange(1, 10)
-    return [make_ticket() for _ in xrange(_count)]
-
-chests = [make_chest() for _ in xrange(50)]
-
-matches = [[] for _ in xrange(100)]
+import numpy as np
+from timer import Timer
+import pickle
 
 
-def iteration():
-    for match in matches:
-        pass
+from bitarray import bitarray
 
 
-en = enumerate
-for j, chest in en(chests):
-    for i, ticket in en(chest):
-        iteration()
+b0 = bitarray(100)
+b0.setall(False)
 
-print map(len, matches)
+b1 = bitarray(100)
+b1.setall(False)
+b1[5] = True
 
+print b0 & b1
