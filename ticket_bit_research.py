@@ -6,12 +6,16 @@ from collections import defaultdict
 from timer import Timer
 from operator import itemgetter, attrgetter, methodcaller
 import pickle
+from bitarray import bitarray
 
 
 
 def make_ticket():
     _count = randrange(1, 10)
-    return frozenset([randrange(100) for _ in xrange(_count)])
+    ticket = bitarray(False) * 100
+    for _ in xrange(_count):
+        ticket[randrange(100)] = True
+    return ticket
 
 def make_chest():
     _count = randrange(1, 10)
@@ -29,7 +33,7 @@ def iteration(args):
 
     added = defaultdict(set)
     for i, ticket in enumerate(chest):
-        idx = len(ticket)
+        idx = ticket.count(1)
         if ticket not in added[idx]:
             added[idx].add(ticket)
             # indexes[ticket] = [(j, i)]
@@ -40,11 +44,10 @@ def iteration(args):
         else:
             c1.next()
 
-
     for i, ticket in enumerate(chest):
         for item in chain(*matches.itervalues()):
             union = ticket | item
-            idx = len(union)
+            idx = union.count(1)
 
             if union not in added[idx] and union not in matches[idx]:
                 added[idx].add(union)
@@ -58,49 +61,25 @@ def iteration(args):
     for i, val in added.iteritems():
         matches[i].update(val)
 
-    print '\t\t\t\t\t\t\tins/skip', c0.next()-1, c1.next()
-
-def merge(a, b): return a | b
-
-
-def mn(chest, ticket, added, j, i):
-    for item in chain(*matches.itervalues()):
-        mn2(ticket, item, added, j, i)
-
-def mn2(ticket, item, added, j, i):
-    item |= ticket
-    # union = ticket | item
-    idx = len(item)
-    if mn3(item, added, idx):
-        mn4(item, added, idx, ticket, (j, i))
-
-def mn3(union, added, idx):
-    return union not in added[idx] and union not in matches[idx]
-
-def mn4(union, added, idx, ticket, (j, i)):
-    if union not in added[idx] and union not in matches[idx]:
-        mp5(added, idx, union, ticket, (j, i))
-
-def mp5(added, idx, union, ticket, (j, i)):
-    added[idx].add(union)
-    mp6(union, ticket, (j, i))
-
-def mp6(union, ticket, (j, i)):
-    indexes_i[union] = i
-    indexes_j[union] = j
-    indexes_k[union] = ticket
-    # indexes[union] = indexes[ticket][:]
-    # indexes[union].append((j, i))
+    print '\t\t\t\t\t\t\tins/skip/items', c0.next()-1, c1.next()-1, sum(map(len, matches.itervalues()))
 
 # chests = [make_chest() for _ in xrange(50)]
-with open('dump.txt') as f, Timer('read chests'):
+with open('dump_bit.txt') as f, Timer('read chests'):
     chests = pickle.load(f)
+
+# for chest in chests:
+#     for i, ticket in enumerate(chest):
+#         bar = bitarray(100)
+#         bar.setall(0)
+#         for item in ticket:
+#             bar[item] = 1
+#         chest[i] = bar
 
 def run():
     for j, chest in enumerate(chests):
         with Timer('iter %i' % j) as t:
             iteration((j, chest))
-            if j == 10:
+            if j == 6:
                 break
     print matches.keys()[-1]
 
