@@ -6,7 +6,7 @@ from danger import Danger
 from copy import deepcopy
 from random import choice
 from itertools import product, chain, count, izip, compress
-from operator import add, sub
+from operator import add, sub, contains
 from functools import partial
 from utils import *
 import collections
@@ -58,8 +58,39 @@ class SpearGenerator(Generator):
             return None
 
         field.add_group(bonus, Type.BONUS)
-        self._spear_filling(field, ans)
+
+        self.make_spear_map(field, ans)
+        # self._spear_filling(field, ans)
         return field
+
+    @staticmethod
+    def visit_time(self, cell, paths):
+        res = []
+        for i, path in enumerate(paths):
+            if cell in path:
+                res.append(path.index(cell), i)
+        return res
+
+    def make_spear_map(self, field, good_paths):
+        bad_paths = Solver(field).run()
+        map(bad_paths.remove, good_paths)
+
+        at_stake = lambda (t, i): Danger.at_stake(per, t)
+
+        smap = set()
+        periods = Danger.make_all_period()
+        for cell in field.free_cells:
+            good_times = self.visit_time(cell, good_paths)
+            bad_times = self.visit_time(cell, bad_paths)
+            cur = set()
+            for per in periods:
+                if filter(at_stake, good_times):
+                    continue
+                bt = filter(at_stake, bad_times)
+                if bt:
+                   map(cur.add, zip(*bt)[1])
+
+            smap.add(frozenset(cur))
 
     def _spear_filling(self, field, paths):
         field.save_backup()

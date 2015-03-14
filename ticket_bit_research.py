@@ -7,12 +7,12 @@ from timer import Timer
 from operator import itemgetter, attrgetter, methodcaller
 import pickle
 from bitarray import bitarray
-
+bitarray.__hash__ = lambda s: hash(s.to01())
 
 
 def make_ticket():
     _count = randrange(1, 10)
-    ticket = bitarray(False) * 100
+    ticket = bitarray('0') * 100
     for _ in xrange(_count):
         ticket[randrange(100)] = True
     return ticket
@@ -26,6 +26,8 @@ matches = defaultdict(set)
 indexes_i = dict()
 indexes_j = dict()
 indexes_k = dict()
+indexes = dict()
+
 
 def iteration(args):
     j, chest = args
@@ -36,10 +38,10 @@ def iteration(args):
         idx = ticket.count(1)
         if ticket not in added[idx]:
             added[idx].add(ticket)
-            # indexes[ticket] = [(j, i)]
-            indexes_i[ticket] = i
-            indexes_j[ticket] = j
-            indexes_k[ticket] = None
+            indexes[ticket] = [(j, i), ticket]
+            # indexes_i[ticket] = i
+            # indexes_j[ticket] = j
+            # indexes_k[ticket] = None
             c0.next()
         else:
             c1.next()
@@ -64,8 +66,13 @@ def iteration(args):
     print '\t\t\t\t\t\t\tins/skip/items', c0.next()-1, c1.next()-1, sum(map(len, matches.itervalues()))
 
 # chests = [make_chest() for _ in xrange(50)]
-with open('dump_bit.txt') as f, Timer('read chests'):
+# with open('dump_bit.txt', 'w') as f:
+#     pickle.dump(chests, f)
+# exit()
+
+with open('dump_bit.txt') as f:
     chests = pickle.load(f)
+
 
 # for chest in chests:
 #     for i, ticket in enumerate(chest):
@@ -75,23 +82,27 @@ with open('dump_bit.txt') as f, Timer('read chests'):
 #             bar[item] = 1
 #         chest[i] = bar
 
-def run():
-    for j, chest in enumerate(chests):
-        with Timer('iter %i' % j) as t:
-            iteration((j, chest))
-            if j == 6:
-                break
+def run(n):
+    with Timer('ALL'):
+        for j, chest in enumerate(chests):
+            with Timer('iter %i' % j) as t:
+                iteration((j, chest))
+                if j == n:
+                    break
     print matches.keys()[-1]
 
 import pstats
 import cProfile
 import re
 
-cProfile.run('run()', '/tmp/restats')
-p = pstats.Stats('/tmp/restats')
-p.strip_dirs()
-p.sort_stats('time', 'cum')
-p.print_stats()
+
+run(6)
+
+# cProfile.run('run()', '_restats')
+# p = pstats.Stats('_restats')
+# p.strip_dirs()
+# p.sort_stats('time', 'cumulative')
+# p.print_stats()
 
 
 # cc, nc, tt, ct, callers

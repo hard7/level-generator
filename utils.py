@@ -14,6 +14,10 @@ def _getitem(index):
 def take_some(array, indexes):
     return [array[index] for index in indexes if index < len(array)]
 
+def gen_some(array, indexes):
+    for index in indexes:
+        if index < len(array):
+            yield array[index]
 
 def get_reflection(dim, coord):
     x, y = dim

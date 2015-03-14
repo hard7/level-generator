@@ -14,4 +14,5 @@ def make():
 
 
 if __name__ == '__main__':
-    make()
+    gen = SpearGenerator((6, 6))
+    field = gen._make_field()
