@@ -2,38 +2,7 @@ from itertools import chain, count
 from collections import defaultdict
 from bitarray import bitarray
 bitarray.__hash__ = lambda s: hash(s.to01())
-
 count_values = lambda t: t.count(1)
-
-
-def bit_solver(slist):
-    def iteration((j, chest)):
-        added = defaultdict(set)
-        for i, ticket in enumerate(chest):
-            idx = count_values(ticket)
-            if ticket in matches[idx]:
-                matches[idx].remove(ticket)
-            if ticket not in added[idx]:
-                added[idx].add(ticket)
-                indexes[ticket] = [(j, i)]
-
-        for i, ticket in enumerate(chest):
-            for item in chain(*matches.itervalues()):
-                union = ticket | item
-                idx = union.count(1)
-
-                if union not in added[idx]:
-                    if union not in matches[idx]:
-                        added[idx].add(union)
-                        indexes[union] = indexes[ticket][:]
-                        indexes[union].append((j, i))
-
-        for i, val in added.iteritems():
-            matches[i].update(val)
-
-    indexes = dict()
-    matches = defaultdict(set)
-    map(iteration, enumerate(slist))
 
 
 def BFS(danger_cells, n):
