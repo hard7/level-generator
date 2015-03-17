@@ -96,7 +96,7 @@ import cProfile
 import re
 
 
-run(6)
+run(5)
 
 # cProfile.run('run()', '_restats')
 # p = pstats.Stats('_restats')
