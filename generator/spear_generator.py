@@ -10,6 +10,8 @@ from operator import add, sub, itemgetter
 from functools import partial
 from utils import *
 import collections
+import BFS
+from timer import Timer
 
 
 class SpearGenerator(Generator):
@@ -28,17 +30,16 @@ class SpearGenerator(Generator):
         field = Field(self.dim)
         self.put_start_and_finish(field)
         self.put_bricks(field)
-        good_paths = self.get_good_paths()
-        if good_paths is None:
-            print 'good_paths is None'
-            return None
-
-        self.put_bonus(field, good_paths)
-        slist = self.make_spear_list(field, good_paths)
-
-
-        # self._spear_filling(field, ans)
+        # good_paths = self.get_good_paths(field)
+        # if good_paths is None:
+        #     print 'good_paths is None'
+        #     return None
+        # self.put_bonus(field, good_paths)
+        paths = Solver(field).run()
+        dv, descr = self.search_danger_variant(paths)
         return field
+
+        # self._spear_filling(field, good_paths)
 
     def put_start_and_finish(self, field):
         start = self._choice_start_position()
@@ -46,10 +47,10 @@ class SpearGenerator(Generator):
         field.add_object(start, Type.START)
         field.add_object(finish, Type.FINISH)
 
-    def put_bricks(self, field):
+    def put_bricks(self, field, _range=(26, 50)):
         ans = []
         field.save_backup()
-        while len(ans) < 26 or len(ans) > 50:
+        while len(ans) < _range[0] or len(ans) > _range[1]:
             wg = WallGen(self.dim, field.start, field.finish)
             wg.gen_loop()
             wg.gen_loop()
@@ -88,26 +89,55 @@ class SpearGenerator(Generator):
                 res.append((time, path_i))
         return res
 
+    @staticmethod
+    def search_danger_variant(paths):
+        at_stake = lambda (t, _): Danger.at_stake(per, t)
+        slist = list()
+        periods = Danger.make_all_period()
+        free_cells = set(chain(p[1:-1] for p in paths))
+        for cell in free_cells:
+            times = SpearGenerator.visit_time(cell, paths)
+            cur = list()
+            for per in periods:
+                bt = filter(at_stake, times)
+                indexes = map(itemgetter(1), bt)
+                if indexes:
+                    cur.append(BFS.make_item(indexes, len(paths)))
+            if cur:
+                slist.append(cur)
+        return slist, None
+
+    @staticmethod
+    def cell_to_danger_variant():
+        pass
+
     def make_spear_list(self, field, good_paths):
         bad_paths = Solver(field).run()
         map(bad_paths.remove, good_paths)
+        len_bad_paths = len(bad_paths)
         at_stake = lambda (t, _): Danger.at_stake(per, t)
 
-        slist = dict()
+        slist = list()
         periods = Danger.make_all_period()
         for cell in field.free_cells:
             good_times = self.visit_time(cell, good_paths)
             bad_times = self.visit_time(cell, bad_paths)
-            cur = set()
+            cur = list()
             for per in periods:
                 if filter(at_stake, good_times):
                     continue
                 bt = filter(at_stake, bad_times)
                 indexes = map(itemgetter(1), bt)
                 if indexes:
-                    cur.add(frozenset(indexes))
+                    # cur.add(frozenset(indexes))
+                    cur.append(BFS.make_item(indexes, len_bad_paths))
             if cur:
-                slist[cell] = cur
+                slist.append(cur)
+
+        print field.take_text()
+        with Timer():
+            x = BFS.BFS(slist, len_bad_paths)
+        # print 'x:', x
         return slist
 
     def _spear_filling(self, field, paths):
