@@ -4,3 +4,7 @@ from timer import Timer
 from random import *
 from operator import itemgetter
 from copy import *
+
+
+
+print '9'*5

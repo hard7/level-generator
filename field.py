@@ -24,6 +24,9 @@ class Field:
         self.free_cells = \
             list(product(*map(xrange, dim)))
 
+    # def solve(self):
+    #     return solver.Solver(self).run()
+
     def add_object(self, coord, type_, periods=None, dirs=None):
         self.free_cells.remove(coord)
         if type_ == Type.START:

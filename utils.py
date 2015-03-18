@@ -29,7 +29,15 @@ choice_from_set = lambda l: random.sample(l, 1)[0]
 
 
 def choice_and_pop(array):
-    item = random.choice(array)
+    if not array:
+        return None
+
+    _choice = None
+    if isinstance(array, set):
+        _choice = choice_from_set
+    elif isinstance(array, list):
+        _choice = random.choice
+    item = _choice(array)
     array.remove(item)
     return item
 

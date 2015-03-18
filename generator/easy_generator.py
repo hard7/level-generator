@@ -2,7 +2,7 @@ __author__ = 'anosov'
 
 from random import randrange, choice
 
-from danger import Type, Dir
+from danger_field import Type, Dir
 from field import Field
 from random_coord import UniqueRandomCoord
 from generator import Generator
