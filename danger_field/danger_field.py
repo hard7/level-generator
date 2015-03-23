@@ -75,7 +75,7 @@ class Spear(object):
         self._covers = [Cover(per, isec, len(paths)) for per in Period]
         self._covers = filter(bool, self._covers)
         random.shuffle(self._covers)
-        print 'cover count', len(self._covers)
+        # print 'cover count', len(self._covers)
 
     def __nonzero__(self):
         return bool(self._covers)
@@ -96,9 +96,9 @@ class DField(object):
                         for cell in self._cells]
         random.shuffle(self._spears)
         self._left = map(id, self._spears)
-        print 'path count', len(self._paths)
-        print 'cell count', len(self._cells)
-        print 'period count', len(Period)
+        # print 'path count', len(self._paths)
+        # print 'cell count', len(self._cells)
+        # print 'period count', len(Period)
 
     def gen_spear(self):
         for spear in itertools.cycle(self._spears):
@@ -126,22 +126,34 @@ class DField(object):
         si_map, ci_map = self.si_map, self.ci_map
         si_map[cover] = [si]
         ci_map[cover] = [ci]
-        ans = []
+        answers = []
         for pushed in si_map.keys():
             si_map_pushed = si_map[pushed]
             if si not in si_map_pushed:
                 union = pushed | cover
                 if union not in si_map:
                     if union.count(0) == 3:
-                        res = (union, zip(si_map_pushed + [si], ci_map[pushed] + [ci]))
-                        ans.append(res)
+                        # res = (union, zip(si_map_pushed + [si], ci_map[pushed] + [ci]))
+                        res = (union, si_map_pushed, ci_map[pushed], si, ci)
+                        answers.append(res)
                     elif union.count(0) > 3 and len(si_map_pushed) < 8:
                         si_map[union] = si_map_pushed + [si]
                         ci_map[union] = ci_map[pushed] + [ci]
                 elif len(si_map_pushed) + 1 < len(si_map[union]):
                     si_map[union] = si_map_pushed + [si]
                     ci_map[union] = ci_map[pushed] + [ci]
-        return [(to_list(cover), d) for cover, d in ans]
+        return self.collect_answers(answers)
+
+    def collect_answers(self, answers):
+        def detail(prop):
+            si, ci = prop
+            return self._cells[si] + Period[ci]
+
+        def collect(answer):
+            path_indexes = to_list(answer[0])
+            props = zip(*answer[1:3]) + [answer[3:]]
+            return path_indexes, map(detail, props)
+        return map(collect, answers)
 
 
 if __name__ == '__main__':

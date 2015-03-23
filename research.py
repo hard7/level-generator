@@ -7,4 +7,15 @@ from copy import *
 
 
 
-print '9'*5
+class A:
+    def __iter__(self):
+        for i in [1, 2, 3]:
+            yield i
+
+    def next(self):
+        d = next(self.c)
+        return d
+
+
+for a in A():
+    print a

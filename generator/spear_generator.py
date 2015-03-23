@@ -14,6 +14,8 @@ from timer import Timer
 from wall_gen import WallGen
 from random import shuffle
 from danger_field.danger_field import DField
+import pickle
+
 
 class SpearGenerator(Generator):
     def __init__(self, *args, **kwargs):
@@ -26,17 +28,39 @@ class SpearGenerator(Generator):
                 return f
 
     def _make_field(self, p=None):
-        field = Field(self.dim)
-        self.put_start_and_finish(field)
-        self.put_bricks(field)
+        # field = Field(self.dim)
+        # self.put_start_and_finish(field)
+        # self.put_bricks(field)
+        #
+        # print field.take_text()
 
+        with open('fish.dat') as f:
+            field = pickle.load(f)
+
+        print '>', len(Solver(field).run())
+
+        field.add_object((0, 3), Type.SPEAR, (1, 1, 0))
         print field.take_text()
-        c = count()
-        all_res = []
-        for res in DField(field):
-            print c.next(), res
 
-        # print 'count: ', c.next(), 'res count:', len(res)
+        print '>', len(Solver(field).run())
+
+
+        # c = count()
+        # for covers in DField(field):
+        #     if covers:
+        #         break
+        #
+        # field.save_backup()
+        #
+        # for cover in covers:
+        #     paths, spears = cover
+        #     field.load_backup()
+        #     for spear in spears:
+        #         field.add_object(spear[:2], Type.SPEAR, spear[2:])
+        #
+        #     res = Solver(field).run()
+        #     print field.take_text()
+        #     print len(spears), len(res)
 
         return field
 
