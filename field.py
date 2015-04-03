@@ -102,9 +102,9 @@ class Field(object):
             symbols[name] = s
             del symbols[name]['symbol']
 
-        f = Field(level['size'])
+        f = Field(level['size'][::-1])
         _map = level['map'][::-1]
-        for y, x in product(*map(xrange, level['size'])):
+        for y, x in product(*map(xrange, f.dim)):
             s = symbols[_map[y][x]]
             if s['type'] == 'START': f.add_object((y, x), Type.START)
             elif s['type'] == 'FINISH': f.add_object((y, x), Type.FINISH)
@@ -226,6 +226,8 @@ class Field(object):
     def text(self):
         return self.take_text()
 
+    txt = text
+
     def take_text(self, name='x'):
         prop = json.loads(self.take_json())
         msg = str()
@@ -252,7 +254,7 @@ class Field(object):
         dy, dx = self.dim
         level = dict()
         level['name'] = name
-        level['size'] = [dy, dx]
+        level['size'] = [dx, dy]
         level['map'] = None
         level['symbols'] = None
 
@@ -291,13 +293,3 @@ class Field(object):
         level['symbols'] = symbols
 
         return json.dumps(level, indent=2, sort_keys=True)
-
-if __name__ == '__main__':
-    field = Field(8, 5)
-    field.add_object((2, 3), Type.START)
-    field.add_object((2, 2), Type.WALL)
-    field.add_object((1, 1), Type.LASER, (1, 1, 1), [Dir.UP])
-
-    field.init()
-    field.set_time(0)
-    print field.available_for_move(field.start)

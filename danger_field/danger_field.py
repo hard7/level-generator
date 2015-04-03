@@ -86,16 +86,19 @@ class Spear(object):
 
 
 class DField(object):
-    def __init__(self, _field):
+
+    def __init__(self, _field, path_count=3):
         assert isinstance(_field, field.Field)
+        self._path_count = path_count
         self._cells = _field.free_cells[:]
         self._paths = solver.Solver(_field).run()
         self._spears = [Spear(cell, self._paths)
                         for cell in self._cells]
         random.shuffle(self._spears)
         self._left = map(id, self._spears)
-        # print 'path count', len(self._paths)
-        # print 'cell count', len(self._cells)
+
+        print '=> path count:', len(self._paths)
+        print '=> cell count:', len(self._cells)
         # print 'period count', len(Period)
 
     def gen_spear(self):
@@ -117,9 +120,11 @@ class DField(object):
         self.cov = self.gen_cover()
         self.si_map = dict()
         self.ci_map = dict()
+        self.counter = 0
         return self
 
     def next(self):
+        path_count = self._path_count
         cover, si, ci = self.cov.next()
         si_map, ci_map = self.si_map, self.ci_map
         si_map[cover] = [si]
@@ -130,17 +135,21 @@ class DField(object):
             if si not in si_map_pushed:
                 union = pushed | cover
                 if union not in si_map:
-                    if union.count(0) == 3:
+                    if union.count(0) == path_count:
                         # res = (union, zip(si_map_pushed + [si], ci_map[pushed] + [ci]))
                         res = (union, si_map_pushed, ci_map[pushed], si, ci)
                         answers.append(res)
-                    elif union.count(0) > 3 and len(si_map_pushed) < 8:
+                    elif union.count(0) > path_count and len(si_map_pushed) < 10:
                         si_map[union] = si_map_pushed + [si]
                         ci_map[union] = ci_map[pushed] + [ci]
                 elif len(si_map_pushed) + 1 < len(si_map[union]):
                     si_map[union] = si_map_pushed + [si]
                     ci_map[union] = ci_map[pushed] + [ci]
-        return self.collect_answers(answers)
+
+        res = self.collect_answers(answers)
+        self.counter += len(res)
+        print 'len si_map', len(si_map.keys()), self.counter
+        return res
 
     def collect_answers(self, answers):
         def detail(prop):

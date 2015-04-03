@@ -5,18 +5,20 @@ import pickle
 import itertools
 import operator
 import utils
+from collections import defaultdict
+from timer import Timer
 
-
-def make():
+def make(pack, n=1, ext=False):
     def make_one(i):
         field = gen.make_field()
-        name = 'spear_%i' % i
-        out = open('gen_spear/%s.txt' % name, 'w')
-        out.write(field.take_json(name))
-        out.close()
+        name = '%s_%i' % (pack, i)
+        path = '/ExternalLevels/%s.txt' % name if ext else \
+            '../#output/%s/%s.txt' % (pack, name)
+        with open(path, 'w') as f:
+            f.write(field.take_json(name))
 
     gen = SpearGenerator((6, 6))
-    map(make_one, xrange(50))
+    map(make_one, xrange(n))
 
 
 def compare():
@@ -32,6 +34,7 @@ def compare():
     from_pickle_solves = sorted(map(tuple, solve(from_pickle)))
     from_json_solve = sorted(map(tuple, solve(from_json)))
     assert from_pickle_solves == from_json_solve
+
 
 def provocation():
     gen = SpearGenerator((6, 6))
@@ -50,9 +53,14 @@ def provocation():
     field_from_json_solves = sorted(map(tuple, solve(field_from_json)))
     assert gen_field_solves == field_from_json_solves
 
-    # print gen_field_solves
-    # print field_from_json_solves
 
+def test():
+    gen = SpearGenerator(6, 7)
+    gen_field = gen.make_field()
+    json_path = '/ExternalLevels/level.txt'
+    with open(json_path, 'w') as f:
+        f.write(gen_field.take_json('level'))
 
 if __name__ == '__main__':
-    provocation()
+    with Timer():
+        test()
