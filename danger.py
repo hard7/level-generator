@@ -7,14 +7,15 @@ from functools import partial
 class Type:
     START = 1
     FINISH = 2
-    BRICK = 3
+    WALL = 3
     LASER = 4
     SPEAR = 5
     BONUS = 6
 
 
 class Dir:
-    ALL = (0, 1), (1, 0), (0, -1), (-1, 0)
+    # ALL = (0, 1), (1, 0), (0, -1), (-1, 0)
+    ALL = (1, 0), (0, 1), (-1, 0), (0, -1)
     UP, RIGHT, DOWN, LEFT = ALL
 
     @staticmethod

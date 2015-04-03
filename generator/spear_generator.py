@@ -1,11 +1,12 @@
 from generator import Generator
-from field import Type
+from x_field import Type
 from solver import *
-from danger import Danger
+from danger import Danger, Dir
 from copy import deepcopy
 from random import choice
 from itertools import product, chain, count, izip
 from operator import add, sub, itemgetter
+import operator as op
 from functools import partial
 from utils import *
 import collections
@@ -15,6 +16,7 @@ from wall_gen import WallGen
 from random import shuffle
 from danger_field.danger_field import DField
 import pickle
+import pprint
 
 
 class SpearGenerator(Generator):
@@ -28,40 +30,34 @@ class SpearGenerator(Generator):
                 return f
 
     def _make_field(self, p=None):
-        # field = Field(self.dim)
-        # self.put_start_and_finish(field)
-        # self.put_bricks(field)
-        #
-        # print field.take_text()
+        field = Field(self.dim)
+        self.put_start_and_finish(field)
+        self.put_bricks(field)
+        # print x_field.take_text()
 
-        with open('fish.dat') as f:
-            field = pickle.load(f)
-
-        print '>', len(Solver(field).run())
-
-        field.add_object((0, 3), Type.SPEAR, (1, 1, 0))
-        print field.take_text()
-
-        print '>', len(Solver(field).run())
+        # with open('fish.dat') as f:
+        #     x_field = pickle.load(f)
+            #pickle.dump(x_field, f)
 
 
-        # c = count()
-        # for covers in DField(field):
-        #     if covers:
-        #         break
-        #
-        # field.save_backup()
-        #
-        # for cover in covers:
-        #     paths, spears = cover
-        #     field.load_backup()
-        #     for spear in spears:
-        #         field.add_object(spear[:2], Type.SPEAR, spear[2:])
-        #
-        #     res = Solver(field).run()
-        #     print field.take_text()
-        #     print len(spears), len(res)
+        with nested_break_contextmanager() as nested_break:
+            for covers in DField(field):
+                for free_paths, spears in covers:
+                    if len(spears) <= 5:
+                        break
 
+                    scoords = set(map(xgetitem[0:2], spears))
+                    bonus_var = self.get_bonus(free_paths)
+                    [op.isub(bv, scoords) for bv in bonus_var]
+                    map(partial(operator.isub, scoords), bonus_var)
+                    if all(bonus_var):
+                        bonus = map(choice_from_set, bonus_var)
+                        field.add_group(bonus, Type.BONUS)
+                        map(field.add_spear, spears)
+
+                        for i in free_paths: print path_to_str(i)
+
+                        raise nested_break
         return field
 
     def put_start_and_finish(self, field):
@@ -80,28 +76,13 @@ class SpearGenerator(Generator):
             wg.gen_bridge()
 
             field.load_backup()
-            field.add_group(wg.get_bricks(), Type.BRICK)
+            field.add_group(wg.get_bricks(), Type.WALL)
             ans = Solver(field).run()
 
     @staticmethod
-    def get_good_paths(field):
-        ans = Solver(field).run()
-        _size = len(ans) / 3
-        ans = list(izip(*[iter(ans)]*_size))
-        c0 = count(42, -1)
-        while c0.next():
-            paths = map(choice, ans)
-            x, y, z = map(set, [a[3:-2] for a in paths])
-            if all([(z & y & x), (z & y - x), (z - y - x)]):
-                return paths
-        return None
-
-    @staticmethod
-    def put_bonus(field, paths):
+    def get_bonus(paths):
         x, y, z = map(set, [a[3:-2] for a in paths])
-        bonus = (z & y & x), (z & y - x), (z - y - x)
-        bonus = map(choice_from_set, bonus)
-        field.add_group(bonus, Type.BONUS)
+        return [(z & y & x), (z & y - x), (z - y - x)]
 
     @staticmethod
     def visit_time(cell, paths):

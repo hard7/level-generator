@@ -3,7 +3,7 @@ __author__ = 'anosov'
 from random import randrange, choice
 
 from danger_field import Type, Dir
-from field import Field
+from x_field import Field
 from random_coord import UniqueRandomCoord
 from generator import Generator
 from copy import copy
@@ -55,8 +55,8 @@ class EasyGenerator(Generator):
         # hero_coord = self.random_coord.get_on_border
         # finish_coord = (self.x_coord-1-hero_coord[0], self.y_coord-1-hero_coord[1])
         #
-        # field.add_object(hero_coord, Type.HERO)
-        # field.add_object(finish_coord, Type.FINISH)
+        # x_field.add_object(hero_coord, Type.HERO)
+        # x_field.add_object(finish_coord, Type.FINISH)
 
         return field
 

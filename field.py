@@ -3,12 +3,83 @@ __author__ = 'anosov'
 from danger import Type, Dir, Danger
 import string
 import copy
-from itertools import product, takewhile
+from itertools import product, takewhile, compress
 from collections import deque
 from functools import partial
 import json
+import utils
 
-class Field:
+
+interface = '''
+cell_type:
+    SPEAR, LASER, BONUS, START, FINISH, WALL, (TIME)
+    PIT, PLATFORM, KEY, DOOR, EMPTY, PORTAL
+
+cell:
+    _danger_sources = []
+    set_coord(coord)
+    get_coord() -> coord
+    get_type() -> coord.type
+    is_blocked() -> bool
+    is_safely(step) -> bool
+
+periodic:
+    get_set_enable() -> int
+    get_set_disable() -> int
+    get_set_offset() -> int
+    get_set_period() -> tuple3
+    is_enable/disable(step) -> bool
+
+directed:
+    get_directs() -> directly.direct
+
+tagged:
+    get_tag() -> string
+
+spear(cell, periodic)
+laser(cell, periodic, directed):
+    rays
+bonus(cell)
+key(cell, tagged)
+door(cell, tagged)
+pit(cell)
+time(cell)  <- [bad feature]
+empty(cell)
+wall(cell)
+start(cell)
+finish(cell)
+platform(cell)
+portal(cell, tagged)
+
+Field
+    _laser_locations = []
+    set_cell(Cell)
+    type_cell_in_coord(coord) -> cell.type
+    type_cell_in_coord_equal(coord, _type) -> bool
+    set_cell_in_coord(cell, coord)
+
+    load_from_json(File)
+    save_to_json(File)
+    is_safely(coord, step) -> bool
+
+maybe_hang = bonus, key, finish, portal
+always_hang = pit, platform
+always_stand = start, spear, floor
+always_on_hill = laser, door, hill
+
+
+x_field.add(Spear, (1, 2), (3, 2, 1), Start, (1, 2), Finish, (1, 2), HANG)
+x_field.add(Spear((1, 2), (3, 1, 1)))
+
+
+
+
+'''
+
+
+
+
+class Field(object):
     def __init__(self, dim):
         self.dim = dim
         self._danger_cells = []
@@ -24,8 +95,41 @@ class Field:
         self.free_cells = \
             list(product(*map(xrange, dim)))
 
+
     # def solve(self):
     #     return solver.Solver(self).run()
+
+    @staticmethod
+    def load_by_file(file):
+        symbols = dict()
+        level = json.load(file, encoding='utf-8')
+        for s in level['symbols']:
+            name = s['symbol']
+            symbols[name] = s
+            del symbols[name]['symbol']
+
+        f = Field(level['size'])
+        _map = level['map'][::-1]
+        for y, x in product(*map(xrange, level['size'])):
+            s = symbols[_map[y][x]]
+            if s['type'] == 'START': f.add_object((y, x), Type.START)
+            elif s['type'] == 'FINISH': f.add_object((y, x), Type.FINISH)
+            elif s['type'] == 'WALL': f.add_object((y, x), Type.WALL)
+            elif s['type'] == 'BONUS': f.add_object((y, x), Type.BONUS)
+            elif s['type'] == 'SPEAR':
+                on = s['onPeriod']
+                off = s['offPeriod']
+                is_off = s['currentState'] == 'off'
+                period = s['currentPeriod'] + is_off * on
+                f.add_spear((y, x, on, off, period))
+            elif s['type'] == 'LASER':
+                on = s['onPeriod']
+                off = s['offPeriod']
+                is_off = s['currentState'] == 'off'
+                period = s['currentPeriod'] + is_off * on
+                dir = compress(Dir.ALL, s['dangerousSide'])
+                f.add_object((y, x), Type.LASER, (on, off, period, dir))
+        return f
 
     def add_object(self, coord, type_, periods=None, dirs=None):
         self.free_cells.remove(coord)
@@ -33,18 +137,23 @@ class Field:
             self._start = coord
         elif type_ == Type.FINISH:
             self._finish = coord
-        elif type_ == Type.BRICK:
+        elif type_ == Type.WALL:
             self._blocker_cells.append(coord)
             self.bricks.append(coord)
         elif type_ == Type.SPEAR:
-            danger = Danger(coord, type_, periods)
-            self._danger_objects.append(danger)
+            self.add_spear(coord + periods)
+            # danger = Danger(coord, type_, periods)
+            # self._danger_objects.append(danger)
         elif type_ == Type.LASER:
             danger = Danger(coord, type_, periods, dirs)
             self._danger_objects.append(danger)
             self._blocker_cells.append(coord)
         elif type_ == Type.BONUS:
             self.stars.append(coord)
+
+    def add_spear(self, arg):
+        danger = Danger(arg[:2], Type.SPEAR, arg[2:])
+        self._danger_objects.append(danger)
 
     def brick_to_laser(self, coord, periods, dirs):
         self.bricks.remove(coord)
@@ -137,11 +246,11 @@ class Field:
 
     def take_json(self, name='noname'):
         alphabet = deque(string.ascii_uppercase)
-        dx, dy = self.dim
+        dy, dx = self.dim
         level = dict()
         level['name'] = name
-        level['size'] = [dx, dy]
-        level['map'] = ['NOT IMPLEMENTED']
+        level['size'] = [dy, dx]
+        level['map'] = None
         level['symbols'] = None
 
         symbols = list()
@@ -151,10 +260,10 @@ class Field:
         symbols.append({'symbol': '^', 'type': 'FINISH'})
         symbols.append({'symbol': '+', 'type': 'BONUS'})
 
-        def set_symbol((x, y), symbol):
+        def set_symbol((y, x), symbol):
             art[y][x] = symbol
 
-        get_symbol = lambda (x, y): art[y][x]
+        get_symbol = lambda (y, x): art[y][x]
 
         art = [['.']*dx for _ in xrange(dy)]
         set_symbol(self.start, 'o')
@@ -183,7 +292,7 @@ class Field:
 if __name__ == '__main__':
     field = Field(8, 5)
     field.add_object((2, 3), Type.START)
-    field.add_object((2, 2), Type.BRICK)
+    field.add_object((2, 2), Type.WALL)
     field.add_object((1, 1), Type.LASER, (1, 1, 1), [Dir.UP])
 
     field.init()

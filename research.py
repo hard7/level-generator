@@ -4,18 +4,11 @@ from timer import Timer
 from random import *
 from operator import itemgetter
 from copy import *
+from utils import *
+import operator
 
 
-
-class A:
-    def __iter__(self):
-        for i in [1, 2, 3]:
-            yield i
-
-    def next(self):
-        d = next(self.c)
-        return d
+s = [1, 4, 3, 6, 7, 9]
+f = [1, 3, 6]
 
 
-for a in A():
-    print a

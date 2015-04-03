@@ -1,14 +1,44 @@
 import operator
 import random
 import itertools
+import contextlib
 
 
 def _getattr(name, default=None):
     return lambda obj: getattr(obj, name, default)
 
 
-def _getitem(index):
-    return lambda obj: operator.getitem(obj, index)
+class xgetitem:
+    class _(type):
+        def __getitem__(cls, item):
+            return cls(idx=item)
+
+        def __call__(self, idx=None, obj=None):
+            assert (idx is None) ^ bool(obj is None)
+            if idx: return lambda object: operator.getitem(object, idx)
+            elif obj: return lambda index: operator.getitem(obj, index)
+    __metaclass__= _
+
+xget = xgetitem
+
+def mrun(func_name, *args):
+    def wrap(obj):
+        func = getattr(obj, func_name)
+        return func(*args)
+    return wrap
+
+def elvis(obj, default):
+    return obj if obj else default
+
+@contextlib.contextmanager
+def nested_break_contextmanager():
+    class NestedBreakException(Exception):
+        pass
+    try:
+        yield NestedBreakException
+    except NestedBreakException:
+        pass
+
 
 
 def take_some(array, indexes):

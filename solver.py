@@ -1,8 +1,9 @@
 __author__ = 'anosov'
 
-from field import Field
+from x_field import Field
 from itertools import combinations
-
+import danger
+import operator as op
 
 class Node:
     def __init__(self, parent, coord):
@@ -53,6 +54,7 @@ class Solver(object):
         root = Node(None, self._root)
         self._leafs = [root]
         self.win_paths = []
+        self.field.init()
 
     def run(self, t=1):
         assert t < 100
@@ -77,3 +79,23 @@ class Solver(object):
             return self.run(t+1)
         else:
             return self.win_paths
+
+
+def path_to_str(path):
+    char = dict(zip(danger.Dir.ALL, 'URDL'))
+    base = None
+    result = ''
+    for i, coord in enumerate(path):
+        if not base:
+            base = coord
+            continue
+        dir = tuple(map(op.sub, coord, base))
+        result += char[dir]
+        if i and i % 3 == 0:
+            result += ' '
+        base = coord
+    return result
+
+
+def solve(field):
+    return Solver(field).run()

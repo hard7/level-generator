@@ -1,5 +1,5 @@
 __author__ = 'anosov'
-import field
+import x_field
 import solver
 import danger
 import itertools
@@ -16,29 +16,27 @@ def to_list(bitarr):
     return tuple(i for i, flag in e(bitarr) if not flag)
 
 
-class PeriodType(type):
-    def __new__(mcs, name, bases, _dict):
-        p = itertools.product(range(1, 3+1), repeat=2)
-        p = [map(lambda offset: (on, off, offset),
-                 xrange(on+off)) for on, off in p]
-        _dict['period'] = list(itertools.chain(*p))
-        return type.__new__(mcs, name, bases, _dict)
-
-    def __len__(cls):
-        return len(getattr(cls, 'period'))
-
-    def __getitem__(cls, item):
-        return getattr(cls, 'period')[item]
-
-    def index(cls, idx):
-        return getattr(cls, 'period').index(idx)
-
-    def __iter__(cls):
-        for p in getattr(cls, 'period'):
-            yield p
-
-
 class Period(object):
+    class PeriodType(type):
+        def __new__(mcs, name, bases, _dict):
+            p = itertools.product(range(1, 3+1), repeat=2)
+            p = [map(lambda offset: (on, off, offset),
+                     xrange(on+off)) for on, off in p]
+            _dict['period'] = list(itertools.chain(*p))
+            return type.__new__(mcs, name, bases, _dict)
+
+        def __len__(cls):
+            return len(getattr(cls, 'period'))
+
+        def __getitem__(cls, item):
+            return getattr(cls, 'period')[item]
+
+        def index(cls, idx):
+            return getattr(cls, 'period').index(idx)
+
+        def __iter__(cls):
+            for p in getattr(cls, 'period'):
+                yield p
     __metaclass__ = PeriodType
 
 
@@ -89,7 +87,7 @@ class Spear(object):
 
 class DField(object):
     def __init__(self, _field):
-        assert isinstance(_field, field.Field)
+        assert isinstance(_field, x_field.Field)
         self._cells = _field.free_cells[:]
         self._paths = solver.Solver(_field).run()
         self._spears = [Spear(cell, self._paths)
@@ -150,16 +148,16 @@ class DField(object):
             return self._cells[si] + Period[ci]
 
         def collect(answer):
-            path_indexes = to_list(answer[0])
+            paths = [self._paths[i] for i in to_list(answer[0])]
             props = zip(*answer[1:3]) + [answer[3:]]
-            return path_indexes, map(detail, props)
+            return paths, map(detail, props)
         return map(collect, answers)
 
 
 if __name__ == '__main__':
-    _field = field.Field((2, 3))
-    _field.add_object((0, 0), field.Type.START)
-    _field.add_object((1, 2), field.Type.FINISH)
+    _field = x_field.Field((2, 3))
+    _field.add_object((0, 0), x_field.Type.START)
+    _field.add_object((1, 2), x_field.Type.FINISH)
     d = DField(_field)
 
     c = itertools.count()
