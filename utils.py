@@ -27,6 +27,14 @@ def mrun(func_name, *args):
         return func(*args)
     return wrap
 
+xrun = mrun
+
+def xgetattr(attr):
+    def wrap(obj):
+        return getattr(obj, attr)
+    return wrap
+
+
 def elvis(obj, default):
     return obj if obj else default
 

@@ -37,12 +37,20 @@ class Danger:
         self.off_period = periods[1]
         self.offset = periods[2]
         self.dirs = dirs                # TODO
-        self.danger_cells = []
+        self.danger_cells = list()
 
     @staticmethod
     def at_stake(period, step):
         on, off, offset = period
         return (step + offset) % (on + off) < on
+
+    @property
+    def triple(self):
+        return self.on_period, self.off_period, self.offset
+
+    @property
+    def quad_dict(self):
+        return self.get_period_map()
 
     @staticmethod
     def at_stake_wrap(period):
@@ -56,7 +64,9 @@ class Danger:
     def get_period_map(self):
         on, off = self.on_period, self.off_period
         state = 'on' if self.offset < on else 'off'
-        period = self.offset % on
+        period = self.offset
+        if state == 'off':
+            period -= on
         return {'onPeriod': on, 'offPeriod': off,
                 'currentState': state, 'currentPeriod': period}
 

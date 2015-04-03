@@ -77,8 +77,6 @@ x_field.add(Spear((1, 2), (3, 1, 1)))
 '''
 
 
-
-
 class Field(object):
     def __init__(self, dim):
         self.dim = dim
@@ -94,10 +92,6 @@ class Field(object):
 
         self.free_cells = \
             list(product(*map(xrange, dim)))
-
-
-    # def solve(self):
-    #     return solver.Solver(self).run()
 
     @staticmethod
     def load_by_file(file):
@@ -130,6 +124,11 @@ class Field(object):
                 dir = compress(Dir.ALL, s['dangerousSide'])
                 f.add_object((y, x), Type.LASER, (on, off, period, dir))
         return f
+
+    def get_danger_by_coord(self, *args):
+        coord = args[0] if len(args) == 1 else args[:2]
+        _dict = {d_obj.coord: d_obj for d_obj in self._danger_objects}
+        return _dict[coord]
 
     def add_object(self, coord, type_, periods=None, dirs=None):
         self.free_cells.remove(coord)
@@ -183,15 +182,6 @@ class Field(object):
     start = property(lambda self: self._start)
     finish = property(lambda self: self._finish)
 
-    def set_time(self, time):
-        if self._time == time:
-            return
-
-        self._time = time
-        self._danger_cells = []
-        for danger in self._danger_objects:
-            self._danger_cells.extend(danger.pull(time))
-
     def available_for_move(self, coord):
         bad_cells = self._blocker_cells + self._danger_cells
         for_check = map(partial(Dir.move, coord), Dir.ALL)
@@ -207,6 +197,7 @@ class Field(object):
         is_empty = lambda c: not self._is_blocker(c)
 
         def init_danger(d):
+            d.danger_cells[:] = []
             if d.type == Type.SPEAR:
                 d.danger_cells.append(d.coord)
             elif d.type == Type.LASER:
@@ -216,12 +207,24 @@ class Field(object):
                     d.danger_cells.extend(list(r))
         map(init_danger, self._danger_objects)
 
+    def set_time(self, time):
+        if self._time == time: return
+        self._time = time
+        self._danger_cells[:] = []
+        # print 'set_time', time
+        for danger in self._danger_objects:
+            self._danger_cells.extend(danger.pull(time))
+
     def is_valid(self):
         self.set_time(0)
         return self.start not in self._danger_cells
 
     def _is_blocker(self, coord):
         return coord in self._blocker_cells or not self._in_range(coord)
+
+    @property
+    def text(self):
+        return self.take_text()
 
     def take_text(self, name='x'):
         prop = json.loads(self.take_json())

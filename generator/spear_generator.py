@@ -1,5 +1,5 @@
 from generator import Generator
-from x_field import Type
+from field import Type
 from solver import *
 from danger import Danger, Dir
 from copy import deepcopy

@@ -1,6 +1,6 @@
 __author__ = 'anosov'
 
-from x_field import Field
+from field import Field
 from itertools import combinations
 import danger
 import operator as op

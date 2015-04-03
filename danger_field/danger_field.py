@@ -1,5 +1,5 @@
 __author__ = 'anosov'
-import x_field
+import field
 import solver
 import danger
 import itertools
@@ -87,7 +87,7 @@ class Spear(object):
 
 class DField(object):
     def __init__(self, _field):
-        assert isinstance(_field, x_field.Field)
+        assert isinstance(_field, field.Field)
         self._cells = _field.free_cells[:]
         self._paths = solver.Solver(_field).run()
         self._spears = [Spear(cell, self._paths)
@@ -155,9 +155,9 @@ class DField(object):
 
 
 if __name__ == '__main__':
-    _field = x_field.Field((2, 3))
-    _field.add_object((0, 0), x_field.Type.START)
-    _field.add_object((1, 2), x_field.Type.FINISH)
+    _field = field.Field((2, 3))
+    _field.add_object((0, 0), field.Type.START)
+    _field.add_object((1, 2), field.Type.FINISH)
     d = DField(_field)
 
     c = itertools.count()
