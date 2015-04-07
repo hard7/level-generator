@@ -25,77 +25,35 @@ class SpearGenerator(Generator):
 
     def make_field(self, p=None):
         return self._make_field(p)
-        # while True:
-        #     f = self._make_field(p)
-        #     print f, len(Solver(f).run())
-        #     if f and len(Solver(f).run()) > 5:
-        #         return f
-
-        # file << d_field.paths
 
     def _make_field(self, p=None):
-        field = self.get_template('prepared')
+        field = self.get_template()
+        print 'GENERATE'
+
         with nested_break_contextmanager() as nested_break:
             df = DField(field, requared_path_count=1, max_spear=10)      # TODO max_spear
             paths = df.paths
             for covers in df:
                 for free_paths, spears in covers:
-
                     if len(spears) < 5:
                         break
-
-                    # used_cells = len(set(chain(*free_paths)))
-                    # if used_cells < 17:
-                    #     break
-
                     map(field.add_spear, spears)
                     raise nested_break
-
-                    # scoords = set(map(xgetitem[0:2], spears))
-                    # bonus_variants = self.get_bonus_variants(free_paths)
-                    # [op.isub(b, scoords) for b in bonus_variants]
-                    # if all(bonus_variants):
-                    #     bonus = map(choice_from_set, bonus_variants)
-                    #     field.add_group(bonus, Type.BONUS)
-                    #     map(field.add_spear, spears)
-                    #
-                    #     # for i in free_paths: print path_to_str(i)
-                    #
-                    #     if self.check_bonus_is_failed(field):
-                    #         x, y, z = map(set, [a[3:-2] for a in sorted(free_paths, key=len)])
-                    #         # print sorted(free_paths, key=len)
-                    #         print z
-                    #         print y
-                    #         print x
-                    #         print
-                    #         print z & y & x
-                    #         print z & y - x
-                    #         print z - y - x
-                    #     raise nested_break
-
         return field
 
-    def get_template(self, key='generate', args=None):
-        if key.lower() == 'generate':
+    def get_template(self, path=None):
+        if path is None:
             return self._generate_template()
-        elif key.lower() == 'prepared':
-            with open('../#input/t0.txt') as f:
-                template = SpearGenerator.get_prepared_template(f)
+        else:
+            with open(path) as f:
+                template = Field.load_by_file(f)
                 self.dim = template.dim
             return template
-        else:
-            raise RuntimeError('Wrong key %s' % str(key))
 
     def _generate_template(self):
         field = Field(self.dim)
         self.put_start_and_finish(field)
         self.put_bricks(field)
-        return field
-
-    @staticmethod
-    def get_prepared_template(_file):
-        assert isinstance(_file, file)
-        field = Field.load_by_file(_file)
         return field
 
     @staticmethod

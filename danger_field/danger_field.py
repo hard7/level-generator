@@ -89,7 +89,9 @@ class DField(object):
 
     def __init__(self, _field, requared_path_count=3, max_spear=10, max_answer=5000):
         assert isinstance(_field, field.Field)
-        self._path_counts = [requared_path_count] if isinstance(requared_path_count, int) else requared_path_count
+        self._path_counts = [requared_path_count] \
+            if isinstance(requared_path_count, int) \
+            else requared_path_count
         self._cells = _field.free_cells[:]
         self._paths = solver.Solver(_field).run()
         self._spears = [Spear(cell, self._paths)

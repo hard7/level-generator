@@ -1,6 +1,6 @@
 from generator.spear_generator import SpearGenerator
 from field import Field
-from solver import solve, path_to_str
+from solver import solve, path_to_str, Solver
 import cPickle
 from pickle_cover import save_template_covers
 import itertools
@@ -63,15 +63,63 @@ def test():
     with open(json_path, 'w') as f:
         f.write(gen_field.take_json('level'))
 
-if __name__ == '__main__':
-    inp_folder = '../#input/templates'
-    out_folder = '../#output/covers'
 
+def save_covers(inp_folder, out_folder, _count):
     names = filter(lambda s: s.endswith('.txt'), os.listdir(inp_folder))
     names.sort()
     for name in names:
         inp = os.path.join(inp_folder, name)
         out = os.path.join(out_folder, os.path.splitext(name)[0])
+        assert not os.path.exists(out)
         os.mkdir(out)
         with Timer(name):
-            save_template_covers(inp, out, 50000)
+            save_template_covers(inp, out, _count)
+
+if __name__ == '__main__':
+    # save_covers('../#input/templates', '../#output/covers', 50000)
+    index = 6
+    path_to_dir = '../#output/covers/t' + str(index)
+    with open(path_to_dir + '/template.json') as f:
+        field = Field.load_by_file(f)
+    field.save_backup()
+
+    c0 = utils.Count()
+    c1 = utils.Count()
+    best = 0
+    with open(path_to_dir + '/covers_1.dump') as f:
+        known_paths = []
+        while True:
+            try:
+                paths, spears = cPickle.load(f)
+                field.load_backup()
+                map(field.add_spear, spears)
+
+                # print field.txt
+                solver = Solver(field)
+                solver.run()
+                # print 'path', solver.win_paths[0]
+                # print 'all move count', solver.move_count
+                if solver.move_count > best:
+                    best = solver.move_count
+
+
+                print 'cur/best/count: %i / %i / %i' % (solver.move_count, best, c0.next())
+                if solver.move_count > 100 and solver.win_paths[0] not in known_paths:
+                    print '---------------------------------------------------'
+                    known_paths.append(solver.win_paths[0])
+                    path_to_out_file = '../#output/h_lev/lev_%i_%i.txt' % (index, c1.next())
+                    assert not os.path.exists(path_to_out_file)
+                    with open(path_to_out_file, 'w') as fx:
+                        fx.write(field.take_json())
+                    if c1.current == 2:
+                        break
+                        # print 'path', solver.win_paths[0]
+                        # if raw_input('Next?') != '':
+                        #     break
+            except EOFError:
+                break
+
+
+
+
+

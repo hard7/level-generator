@@ -55,6 +55,7 @@ class Solver(object):
         self._leafs = [root]
         self.win_paths = []
         self.field.init()
+        self.move_count = 0
 
     def run(self, t=1):
         assert t < 100
@@ -67,6 +68,7 @@ class Solver(object):
             children = [Node(leaf, c) for c in available_coords]
             leaf.children = children
             future_leafs.extend(children)
+            self.move_count += len(children)
 
         self._leafs = []
         for future_leaf in future_leafs:

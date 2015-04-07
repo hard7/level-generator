@@ -18,6 +18,7 @@ def make_rect_2(p1, p2):
     sides = _bin_op(sub, hi, lo)
     return make_rect(lo, sides)
 
+
 class WallGen(object):
     CENTER = 1
     BORDER = 2

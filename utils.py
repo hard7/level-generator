@@ -66,6 +66,29 @@ def get_reflection(dim, coord):
 choice_from_set = lambda l: random.sample(l, 1)[0]
 
 
+class Count(object):
+    def __init__(self, start=0, step=None):
+        self._step = 1 if step is None else step
+        self._start = start
+        self._current = None
+
+    @property
+    def current(self):
+        assert self._current is not None
+        return self._current
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self._current is None:
+            self._current = self._start
+            return self.current
+        else:
+            self._current += self._step
+            return self.current
+
+
 def choice_and_pop(array):
     if not array:
         return None
