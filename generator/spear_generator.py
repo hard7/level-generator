@@ -31,10 +31,14 @@ class SpearGenerator(Generator):
         #     if f and len(Solver(f).run()) > 5:
         #         return f
 
+        # file << d_field.paths
+
     def _make_field(self, p=None):
         field = self.get_template('prepared')
         with nested_break_contextmanager() as nested_break:
-            for covers in DField(field, 1):
+            df = DField(field, requared_path_count=1, max_spear=10)      # TODO max_spear
+            paths = df.paths
+            for covers in df:
                 for free_paths, spears in covers:
 
                     if len(spears) < 5:
@@ -71,11 +75,14 @@ class SpearGenerator(Generator):
 
         return field
 
-    def get_template(self, key='generate'):
+    def get_template(self, key='generate', args=None):
         if key.lower() == 'generate':
             return self._generate_template()
         elif key.lower() == 'prepared':
-            return self._get_prepared_template()
+            with open('../#input/t0.txt') as f:
+                template = SpearGenerator.get_prepared_template(f)
+                self.dim = template.dim
+            return template
         else:
             raise RuntimeError('Wrong key %s' % str(key))
 
@@ -85,10 +92,10 @@ class SpearGenerator(Generator):
         self.put_bricks(field)
         return field
 
-    def _get_prepared_template(self):
-        with open('../#input/t2.txt') as f:
-            field = Field.load_by_file(f)
-        self.dim = field.dim
+    @staticmethod
+    def get_prepared_template(_file):
+        assert isinstance(_file, file)
+        field = Field.load_by_file(_file)
         return field
 
     @staticmethod
@@ -179,3 +186,4 @@ class SpearGenerator(Generator):
         wg = WallGen(self.dim, None, None)
         start = wg.fill(0, 0) - wg.fill(1, 1) - wg.corner(0, 0)
         return choice_from_set(start)
+

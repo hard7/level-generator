@@ -87,15 +87,17 @@ class Spear(object):
 
 class DField(object):
 
-    def __init__(self, _field, path_count=3):
+    def __init__(self, _field, requared_path_count=3, max_spear=10, max_answer=5000):
         assert isinstance(_field, field.Field)
-        self._path_count = path_count
+        self._path_counts = [requared_path_count] if isinstance(requared_path_count, int) else requared_path_count
         self._cells = _field.free_cells[:]
         self._paths = solver.Solver(_field).run()
         self._spears = [Spear(cell, self._paths)
                         for cell in self._cells]
         random.shuffle(self._spears)
         self._left = map(id, self._spears)
+        self._max_spear = max_spear
+        self._answer_count = max_answer
 
         print '=> path count:', len(self._paths)
         print '=> cell count:', len(self._cells)
@@ -116,15 +118,23 @@ class DField(object):
             cover = spear.pop_cover()
             yield cover(), si, cover.index()
 
+    @property
+    def paths(self):
+        return self._paths
+
     def __iter__(self):
         self.cov = self.gen_cover()
         self.si_map = dict()
         self.ci_map = dict()
         self.counter = 0
+        self.iter_count = itertools.count()
         return self
 
     def next(self):
-        path_count = self._path_count
+        if self.counter > self._answer_count:
+            raise StopIteration
+
+        path_counts = self._path_counts
         cover, si, ci = self.cov.next()
         si_map, ci_map = self.si_map, self.ci_map
         si_map[cover] = [si]
@@ -134,21 +144,24 @@ class DField(object):
             si_map_pushed = si_map[pushed]
             if si not in si_map_pushed:
                 union = pushed | cover
+                answer_count = union.count(0)
                 if union not in si_map:
-                    if union.count(0) == path_count:
-                        # res = (union, zip(si_map_pushed + [si], ci_map[pushed] + [ci]))
+                    if answer_count in path_counts:
                         res = (union, si_map_pushed, ci_map[pushed], si, ci)
                         answers.append(res)
-                    elif union.count(0) > path_count and len(si_map_pushed) < 10:
+                    if answer_count > min(path_counts) and len(si_map_pushed) < self._max_spear:
                         si_map[union] = si_map_pushed + [si]
                         ci_map[union] = ci_map[pushed] + [ci]
                 elif len(si_map_pushed) + 1 < len(si_map[union]):
                     si_map[union] = si_map_pushed + [si]
                     ci_map[union] = ci_map[pushed] + [ci]
+                    if answer_count in path_counts:
+                        res = (union, si_map_pushed, ci_map[pushed], si, ci)
+                        answers.append(res)
 
         res = self.collect_answers(answers)
         self.counter += len(res)
-        print 'len si_map', len(si_map.keys()), self.counter
+        print self.iter_count.next(), 'len si_map', len(si_map.keys()), self.counter
         return res
 
     def collect_answers(self, answers):

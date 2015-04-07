@@ -1,12 +1,14 @@
 from generator.spear_generator import SpearGenerator
 from field import Field
 from solver import solve, path_to_str
-import pickle
+import cPickle
+from pickle_cover import save_template_covers
 import itertools
 import operator
 import utils
 from collections import defaultdict
 from timer import Timer
+import os
 
 def make(pack, n=1, ext=False):
     def make_one(i):
@@ -62,5 +64,14 @@ def test():
         f.write(gen_field.take_json('level'))
 
 if __name__ == '__main__':
-    with Timer():
-        test()
+    inp_folder = '../#input/templates'
+    out_folder = '../#output/covers'
+
+    names = filter(lambda s: s.endswith('.txt'), os.listdir(inp_folder))
+    names.sort()
+    for name in names:
+        inp = os.path.join(inp_folder, name)
+        out = os.path.join(out_folder, os.path.splitext(name)[0])
+        os.mkdir(out)
+        with Timer(name):
+            save_template_covers(inp, out, 50000)
