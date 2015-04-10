@@ -2,13 +2,17 @@ from generator.spear_generator import SpearGenerator
 from field import Field
 from solver import solve, path_to_str, Solver
 import cPickle
-from pickle_cover import save_template_covers
+from pickle_cover import save_template_covers, to_cover
 import itertools
+from itertools import takewhile
 import operator
 import utils
 from collections import defaultdict
+from functools import partial
 from timer import Timer
+from danger import Type     # TODO REPLACE
 import os
+import copy
 
 def make(pack, n=1, ext=False):
     def make_one(i):
@@ -75,8 +79,7 @@ def save_covers(inp_folder, out_folder, _count):
         with Timer(name):
             save_template_covers(inp, out, _count)
 
-if __name__ == '__main__':
-    # save_covers('../#input/templates', '../#output/covers', 50000)
+def make_levels():
     index = 6
     path_to_dir = '../#output/covers/t' + str(index)
     with open(path_to_dir + '/template.json') as f:
@@ -119,6 +122,55 @@ if __name__ == '__main__':
             except EOFError:
                 break
 
+def load_by_ascii(_map, name=None): # add assert
+    def make_f(start, finish, walls):
+        f = Field(map(len, [_map, _map[0]]))
+        f.add_object(start, Type.START); f.add_object(finish, Type.FINISH)
+        f.add_group(walls, Type.WALL)
+        return f
+    take_obj = lambda var: lambda (j, row): [var[item].append((j, i)) for i, item in enumerate(row)]
+    values = lambda var=defaultdict(list): [map(take_obj(var), enumerate(_map)), var][1]
+    args = lambda (x, y, z)=map(values().get, 'o^x'): [x[0], y[0], z]
+    return make_f(*args())
+
+
+def load_group_by_ascii(f):
+    lines = lambda: itertools.imap(utils.xrun('strip'), f.readlines())
+    chunk_and_blank = lambda: map(partial(takewhile, bool), itertools.repeat(lines(), 128))
+    chank = lambda: filter(bool, map(list, chunk_and_blank()))
+    return [load_by_ascii(ch[:0:-1], ch[0]) for ch in chank()]
+
+
+if __name__ == '__main__':
+    _input, _output = '../#input/templates_x1.txt', '/#output/h2'
+
+    with open(_input) as f:
+        fields = load_group_by_ascii(f)
+
+    cover = lambda: zip(fields, map(partial(to_cover, count=1000), fields[:1]))
+
+    def move_count(field):
+        field.save_backup()
+        def wrapper(cover):
+            map(field.add_spear, cover[1])
+            s = Solver(field); s.run()
+            field.load_backup()
+            return s.move_count
+        return wrapper
+
+    def sorting((field, covers)):
+        covers.sort(key=move_count(field), reverse=True)
+
+    c = cover()
+    print map(move_count(fields[0]), c[0][1])
+
+    sorting(c[0])
+
+    print map(move_count(fields[0]), c[0][1])
+    # print c[0][1]
+    # print map(move_count(fields[0]), sorting(cover()[0])[1])
+
+    # print [len(c[1]) for c in cover()]
 
 
 

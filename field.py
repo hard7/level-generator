@@ -253,7 +253,7 @@ class Field(object):
         alphabet = deque(string.ascii_uppercase)
         dy, dx = self.dim
         level = dict()
-        level['name'] = name
+        # level['name'] = name
         level['size'] = [dx, dy]
         level['map'] = None
         level['symbols'] = None

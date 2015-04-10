@@ -35,3 +35,7 @@ def save_template_covers(input_file, output_folder, answer_count):
             for cover in covers:
                 index = len(cover[0])-1
                 cPickle.dump(cover, f(index))
+
+
+def to_cover(field, count=None):
+    return list(DField(field, max_spear=14, max_answer=count))

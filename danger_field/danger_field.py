@@ -87,7 +87,7 @@ class Spear(object):
 
 class DField(object):
 
-    def __init__(self, _field, requared_path_count=3, max_spear=10, max_answer=5000):
+    def __init__(self, _field, requared_path_count=1, max_spear=10, max_answer=5000):
         assert isinstance(_field, field.Field)
         self._path_counts = [requared_path_count] \
             if isinstance(requared_path_count, int) \
@@ -130,12 +130,20 @@ class DField(object):
         self.ci_map = dict()
         self.counter = 0
         self.iter_count = itertools.count()
+        self.for_return = []
+        self.returned_items = utils.Count()
         return self
 
     def next(self):
-        if self.counter > self._answer_count:
+        if self.returned_items.next() >= self._answer_count:
             raise StopIteration
 
+        while True:
+            if self.for_return:
+                return self.for_return.pop()
+            self.for_return = self.iteration()
+
+    def iteration(self):
         path_counts = self._path_counts
         cover, si, ci = self.cov.next()
         si_map, ci_map = self.si_map, self.ci_map
