@@ -94,9 +94,14 @@ class Field(object):
             list(product(*map(xrange, dim)))
 
     @staticmethod
-    def load_by_file(file):
+    def load_by_file(_file):
+        if isinstance(_file, str):
+            with open(_file) as f:
+                return Field.load_by_file(f)
+
+        assert isinstance(_file, file)
         symbols = dict()
-        level = json.load(file, encoding='utf-8')
+        level = json.load(_file, encoding='utf-8')
         for s in level['symbols']:
             name = s['symbol']
             symbols[name] = s

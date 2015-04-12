@@ -19,15 +19,21 @@ class xgetitem:
             elif obj: return lambda index: operator.getitem(obj, index)
     __metaclass__= _
 
+
 xget = xgetitem
 
-def mrun(func_name, *args):
+
+def xrun(func_name, *args):
     def wrap(obj):
         func = getattr(obj, func_name)
         return func(*args)
     return wrap
 
-xrun = mrun
+
+def xwith(path, func, flag='', *args, **kwargs):
+    with open(path, flag) as f:
+        result = func(f, *args, **kwargs)
+    return result
 
 def xgetattr(attr):
     def wrap(obj):

@@ -4,7 +4,7 @@ from solver import solve, path_to_str, Solver
 import cPickle
 from pickle_cover import save_template_covers, to_cover
 import itertools
-from itertools import takewhile
+from itertools import takewhile, chain, count, repeat
 import operator
 import utils
 from collections import defaultdict
@@ -131,47 +131,58 @@ def load_by_ascii(_map, name=None): # add assert
     take_obj = lambda var: lambda (j, row): [var[item].append((j, i)) for i, item in enumerate(row)]
     values = lambda var=defaultdict(list): [map(take_obj(var), enumerate(_map)), var][1]
     args = lambda (x, y, z)=map(values().get, 'o^x'): [x[0], y[0], z]
+
+    # print map(values().get, 'o^x')
+
     return make_f(*args())
 
 
 def load_group_by_ascii(f):
+    if isinstance(f, str):
+        with open(f) as _f: return load_group_by_ascii(_f)
+
     lines = lambda: itertools.imap(utils.xrun('strip'), f.readlines())
     chunk_and_blank = lambda: map(partial(takewhile, bool), itertools.repeat(lines(), 128))
     chank = lambda: filter(bool, map(list, chunk_and_blank()))
     return [load_by_ascii(ch[:0:-1], ch[0]) for ch in chank()]
 
 
+def move_count(field):
+    field.save_backup()
+    def wrapper((_, spears)):
+        map(field.add_spear, spears)
+        s = Solver(field); s.run()
+        field.load_backup()
+        return s.move_count
+    return wrapper
+
 if __name__ == '__main__':
-    _input, _output = '../#input/templates_x1.txt', '/#output/h2'
+    _input, _output = '../#input/tmpl_test.txt', '/#output/h2'
 
-    with open(_input) as f:
-        fields = load_group_by_ascii(f)
-
-    cover = lambda: zip(fields, map(partial(to_cover, count=1000), fields[:1]))
-
-    def move_count(field):
-        field.save_backup()
-        def wrapper(cover):
-            map(field.add_spear, cover[1])
-            s = Solver(field); s.run()
-            field.load_backup()
-            return s.move_count
-        return wrapper
+    cover = lambda n=1000, f=load_group_by_ascii(_input): \
+        zip(f, map(partial(to_cover, count=n), f))
 
     def sorting((field, covers)):
         covers.sort(key=move_count(field), reverse=True)
 
-    c = cover()
-    print map(move_count(fields[0]), c[0][1])
+    # print map(len, map(solve, load_group_by_ascii(_input)))
+    # print map(move_count(fields[0]), c[0][1])
+    # map(sorting, cover())
 
-    sorting(c[0])
+    def choice_cover(field, covers, n=2):
+        field.save_backup()
+        count_moves = defaultdict(list)
+        for i, cover in enumerate(covers):
+            map(field.add_spear, cover[1])
+            s = Solver(field)
+            s.run()
+            count_moves[s.move_count].append(i)
+            field.load_backup()
+        sort_mv_count = lambda: sorted(count_moves.keys(), reverse=True)
+        all_indexes = lambda: chain(*map(count_moves.get, sort_mv_count()))
+        final_indexes = lambda c=count(): takewhile(lambda _: c.next() < n, all_indexes())
+        return field, map(utils.xget(obj=covers), final_indexes())
 
-    print map(move_count(fields[0]), c[0][1])
-    # print c[0][1]
-    # print map(move_count(fields[0]), sorting(cover()[0])[1])
-
-    # print [len(c[1]) for c in cover()]
-
-
+    print list(itertools.starmap(partial(choice_cover, n=2), cover(3)))
 
 
