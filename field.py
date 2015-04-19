@@ -135,6 +135,10 @@ class Field(object):
         _dict = {d_obj.coord: d_obj for d_obj in self._danger_objects}
         return _dict[coord]
 
+    def get_spear_coords(self):
+        is_spear = lambda d: d.type == Type.SPEAR
+        return [dc.coord for dc in self._danger_objects if is_spear(dc)]
+
     def add_object(self, coord, type_, periods=None, dirs=None):
         self.free_cells.remove(coord)
         if type_ == Type.START:

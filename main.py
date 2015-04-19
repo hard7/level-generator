@@ -156,9 +156,55 @@ def move_count(field):
         return s.move_count
     return wrapper
 
-if __name__ == '__main__':
-    _input, _output = '../#input/tmpl_test.txt', '/#output/h2'
 
+def choice_best_covers(field, covers, n):
+    paths = list()
+    move_count = list()
+    spear_walked = list()
+    field.save_backup()
+    fish_paths = Solver(field).run()
+    min_lfp, max_lfp = len(fish_paths[1]), len(fish_paths[-1])
+
+    for i, cover in enumerate(covers):
+        map(field.add_spear, cover)
+        solver = Solver(field)
+        path = solver.run()[0]
+        assert len(solver.win_paths) == 1
+        sw = len(set(field.get_spear_coords()) & set(path))
+        paths.append(path)
+        move_count.append(solver.move_count)
+        spear_walked.append(sw)
+        field.load_backup()
+
+    result = list()
+
+    while len(result) < n:
+        assert any(move_count)
+        idx = move_count.index(max(move_count))
+        move_count[idx] = 0
+        if spear_walked[idx] < 2: continue
+        if len(paths[idx]) < min_lfp + 4: continue
+        if paths[idx] in [paths[r] for r in result]: continue
+        result.append(idx)
+    return [covers[r] for r in result]
+
+split_covers = lambda (path, cvr): cvr
+
+if __name__ == '__main__':
+    _input, _output = '../#input/tmpl_x2.txt', '/#output/h2'
+    fields = load_group_by_ascii(_input)
+    n = lambda c=count(): c.next()
+    for field in fields:
+        cov = map(split_covers, to_cover(field, 1000))
+        cov = choice_best_covers(field, cov, 3)
+        field.save_backup()
+        for c in cov:
+            map(field.add_spear, c)
+            with open('../#output/d/lvl%s.txt' % n(), 'w') as f:
+                f.write(field.take_json())
+            field.load_backup()
+
+def make_some(_input, _output):
     cover = lambda n=1000, f=load_group_by_ascii(_input): \
         zip(f, map(partial(to_cover, count=n), f))
 
