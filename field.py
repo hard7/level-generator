@@ -94,9 +94,14 @@ class Field(object):
             list(product(*map(xrange, dim)))
 
     @staticmethod
-    def load_by_file(file):
+    def load_by_file(_file):
+        if isinstance(_file, str):
+            with open(_file) as f:
+                return Field.load_by_file(f)
+
+        assert isinstance(_file, file)
         symbols = dict()
-        level = json.load(file, encoding='utf-8')
+        level = json.load(_file, encoding='utf-8')
         for s in level['symbols']:
             name = s['symbol']
             symbols[name] = s
@@ -129,6 +134,10 @@ class Field(object):
         coord = args[0] if len(args) == 1 else args[:2]
         _dict = {d_obj.coord: d_obj for d_obj in self._danger_objects}
         return _dict[coord]
+
+    def get_spear_coords(self):
+        is_spear = lambda d: d.type == Type.SPEAR
+        return [dc.coord for dc in self._danger_objects if is_spear(dc)]
 
     def add_object(self, coord, type_, periods=None, dirs=None):
         self.free_cells.remove(coord)

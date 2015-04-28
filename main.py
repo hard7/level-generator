@@ -12,7 +12,7 @@ from functools import partial
 from timer import Timer
 from danger import Type     # TODO REPLACE
 import os
-import re
+import copy
 
 def make(pack, n=1, ext=False):
     def make_one(i):
@@ -141,26 +141,8 @@ def load_group_by_ascii(f):
     return [load_by_ascii(ch[:0:-1], ch[0]) for ch in chank()]
 
 
-def load_easy_h_format(path):
-    with open(path, 'r') as f:
-        lines = f.readlines()
-    lines = filter(bool, [re.sub(r'\s+', '', l) for l in lines])
-    lines = [l.split('|') for l in lines]
-    lines = zip(*lines)
-    lines = [l[::-1] for l in lines]
-    return iter(lines)
-
 if __name__ == '__main__':
-    l = load_easy_h_format('../#input/mx/mx.tl')
-    f = load_by_ascii(l.next())
-    print len(solve(f))
-    path, cov = to_cover(f, 1)[0]
-    map(f.add_spear, cov)
-    with open('/ExternalLevels/l.txt', 'w') as _f:
-        _f.write(f.take_json())
-
-def act():
-    _input, _output = '../#input/templates_x1.txt', '/#output/mx'
+    _input, _output = '../#input/templates_x1.txt', '/#output/h2'
 
     with open(_input) as f:
         fields = load_group_by_ascii(f)
