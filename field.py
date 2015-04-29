@@ -94,10 +94,10 @@ class Field(object):
             list(product(*map(xrange, dim)))
 
     @staticmethod
-    def load_by_file(_file):
+    def load_by_json(_file):
         if isinstance(_file, str):
             with open(_file) as f:
-                return Field.load_by_file(f)
+                return Field.load_by_json(f)
 
         assert isinstance(_file, file)
         symbols = dict()
@@ -198,7 +198,7 @@ class Field(object):
         return filter(check, for_check)
 
     def _in_range(self, coord):
-        dx, dy = self.dim
+        dy, dx = self.dim
         x, y = coord
         return 0 <= x < dx and 0 <= y < dy
 
@@ -262,7 +262,7 @@ class Field(object):
         alphabet = deque(string.ascii_uppercase)
         dy, dx = self.dim
         level = dict()
-        # level['name'] = name
+        level['name'] = name
         level['size'] = [dx, dy]
         level['map'] = None
         level['symbols'] = None

@@ -46,7 +46,7 @@ class SpearGenerator(Generator):
             return self._generate_template()
         else:
             with open(path) as f:
-                template = Field.load_by_file(f)
+                template = Field.load_by_json(f)
                 self.dim = template.dim
             return template
 

@@ -98,7 +98,7 @@ import re
 
 run(5)
 
-# cProfile.run('run()', '_restats')
+# cProfile.scripts('scripts()', '_restats')
 # p = pstats.Stats('_restats')
 # p.strip_dirs()
 # p.sort_stats('time', 'cumulative')

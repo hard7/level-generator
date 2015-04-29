@@ -11,7 +11,7 @@ import utils
 
 def save_template_covers(_field, output_folder, answer_count):
     if isinstance(_field, str) or isinstance(_field, file):
-        field = lambda: Field.load_by_file(_field)
+        field = lambda: Field.load_by_json(_field)
         return save_template_covers(field(), output_folder, answer_count)
 
     is_empty_dir = lambda s: not os.listdir(s)
@@ -35,3 +35,14 @@ def save_template_covers(_field, output_folder, answer_count):
 
 def to_cover(field, count=None):
     return list(DField(field, max_spear=14, max_answer=count))
+
+
+def save_covers(inp_folder, out_folder, _count):
+    names = filter(lambda s: s.endswith('.txt'), os.listdir(inp_folder))
+    names.sort()
+    for name in names:
+        inp = os.path.join(inp_folder, name)
+        out = os.path.join(out_folder, os.path.splitext(name)[0])
+        assert not os.path.exists(out)
+        os.mkdir(out)
+        save_template_covers(inp, out, _count)

@@ -111,7 +111,7 @@ import re
 
 run(6)
 
-# cProfile.run('run()', '/tmp/restats')
+# cProfile.scripts('scripts()', '/tmp/restats')
 # p = pstats.Stats('/tmp/restats')
 # p.strip_dirs()
 # p.sort_stats('time', 'cum')
