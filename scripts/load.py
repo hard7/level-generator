@@ -4,7 +4,7 @@ import itertools
 import field
 
 
-def take_template_ascii_from_file(path):
+def load_template_ascii_gen_from_file(path):
     with open(path) as f:
         raw_txt = f.read()
 

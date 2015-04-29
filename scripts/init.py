@@ -30,6 +30,17 @@ def init_template_field_by_ascii(_map):
     return tmpl
 
 
+def init_correct_field_by_ascii_gen(map_gen):
+    correct_fields = list()
+    correct_indexes = list()
+    for i, _map in enumerate(map_gen):
+        try:
+            f = init_template_field_by_ascii(_map)
+            correct_fields.append(f)
+            correct_indexes.append(i)
+        except AssertionError:
+            pass
+    return correct_fields, correct_indexes
 
 
     # def make_f(start, finish, walls):
