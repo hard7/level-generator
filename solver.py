@@ -4,6 +4,7 @@ from field import Field
 from itertools import combinations
 import danger
 import operator as op
+from collections import defaultdict
 
 class Node:
     def __init__(self, parent, coord):
@@ -18,6 +19,10 @@ class Node:
             node = node.parent
             path.append(node.coord)
         return path[::-1]
+
+    def is_leaf(self):
+        return bool(self.children)
+
 
 
 def find_passed_cells(paths):
@@ -50,9 +55,11 @@ class Solver(object):
     def __init__(self, field):
         assert isinstance(field, Field)
         self.field = field
-        self._root = field.start
-        root = Node(None, self._root)
-        self._leafs = [root]
+
+        # self._root = field.start
+        # root = Node(None, self._root)
+        self.root = Node(None, field.start)
+        self._leafs = [self.root]
         self.win_paths = []
         self.field.init()
         self.move_count = 0
@@ -81,6 +88,27 @@ class Solver(object):
             return self.run(t+1)
         else:
             return self.win_paths
+
+    def count_ways(self):
+        ways = defaultdict(int)
+        leafs = list()
+        def iterate(nodes):
+            for node in nodes:
+                if node.children:
+                    iterate(node.children)
+                else:
+                    leafs.append(node)
+        print 'i'
+        iterate([self.root])
+
+        for leaf in leafs:
+            ways[leaf] = 1
+            node = leaf.parent
+            while node:
+                ways[node] += 1
+                node = node.parent
+        print len(leafs)
+        print ways[self.root]
 
 
 def path_to_str(path):
