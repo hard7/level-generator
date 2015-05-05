@@ -3,7 +3,7 @@ import os
 import itertools
 
 
-def fields2out(fields, out, base_name):
+def save_fields2out(fields, out, base_name):
     c = itertools.count()
     for field in fields:
         name = base_name + '_' + str(c.next())

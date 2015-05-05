@@ -199,7 +199,7 @@ class Field(object):
 
     def _in_range(self, coord):
         dy, dx = self.dim
-        x, y = coord
+        y, x = coord
         return 0 <= x < dx and 0 <= y < dy
 
     def init(self):
