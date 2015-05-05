@@ -41,7 +41,7 @@ def choice_good_covers(field, covers, n):
 
 
 def calc_covered_gen(field):
-    df = danger_field.DField(field, max_spear=10, max_answer=1000)
+    df = danger_field.DField(field, max_spear=18, max_answer=2000)
     field.save_backup()
     for c in df:
         map(field.add_spear, c[1])
@@ -50,7 +50,7 @@ def calc_covered_gen(field):
 
 
 def calc_covered_one(field, n):
-    df = danger_field.DField(field, max_spear=10, max_answer=1000)
+    df = danger_field.DField(field, max_spear=18, max_answer=2000)
     covers = (s[1] for s in df)
     good_covers = choice_good_covers(field, covers, 3)
     field.save_backup()

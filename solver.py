@@ -1,10 +1,11 @@
 __author__ = 'anosov'
 
 from field import Field
-from itertools import combinations
+from itertools import combinations, count, chain
 import danger
 import operator as op
 from collections import defaultdict
+import fn
 
 class Node:
     def __init__(self, parent, coord):
@@ -59,57 +60,67 @@ class Solver(object):
         # self._root = field.start
         # root = Node(None, self._root)
         self.root = Node(None, field.start)
-        self._leafs = [self.root]
+        self.cursor_nodes = [self.root]
         self.win_paths = []
+        self._win_nodes = []
         self.field.init()
         self.move_count = 0
+        self.leafs = []
 
     def run(self, t=1):
         assert t < 100
         future_leafs = []
         avc = self.field.available_for_move
-        not_in_path = lambda arg: arg not in leaf.path()
+        not_in_path = lambda arg: arg not in cur.path()
         self.field.set_time(t)
-        for leaf in self._leafs:
-            available_coords = filter(not_in_path, avc(leaf.coord))
-            children = [Node(leaf, c) for c in available_coords]
-            leaf.children = children
+        for cur in self.cursor_nodes:
+            available_coords = filter(not_in_path, avc(cur.coord))
+            children = [Node(cur, c) for c in available_coords]
+            cur.children = children
             future_leafs.extend(children)
             self.move_count += len(children)
+            if not children:
+                self.leafs.append(cur)
 
-        self._leafs = []
+        self.cursor_nodes = []
         for future_leaf in future_leafs:
             if future_leaf.coord == self.field.finish:
                 self.win_paths.append(future_leaf.path())
+                self._win_nodes.append(future_leaf)
+                self.leafs.append(future_leaf)
             else:
-                self._leafs.append(future_leaf)
+                self.cursor_nodes.append(future_leaf)
 
-        if self._leafs:
+        if self.cursor_nodes:
             return self.run(t+1)
         else:
             return self.win_paths
 
-    def count_ways(self):
-        ways = defaultdict(int)
-        leafs = list()
-        def iterate(nodes):
-            for node in nodes:
-                if node.children:
-                    iterate(node.children)
-                else:
-                    leafs.append(node)
-        print 'i'
-        iterate([self.root])
-
-        for leaf in leafs:
-            ways[leaf] = 1
+    def is_valid(self):
+        ways = defaultdict(list)
+        for leaf in self.leafs:
+            n = lambda c=count(): c.next()
+            ways[leaf].append(n())
             node = leaf.parent
             while node:
-                ways[node] += 1
+                ways[node].append(n())
                 node = node.parent
-        print len(leafs)
-        print ways[self.root]
+        [var.sort() for var in ways.itervalues()]
 
+        wpath = list()
+        node = self._win_nodes[0]
+        while node:
+            wpath.append(node)
+            node = node.parent
+        wpath = wpath[::-1]
+        wpath = fn.iters.pairwise(wpath)
+        for parent_node, child_node in wpath:
+            other_paths = ways[parent_node][:]
+            [other_paths.remove(s+1) for s in ways[child_node]]
+
+            if other_paths and max(other_paths) > 5:
+                return False
+        return True
 
 def path_to_str(path):
     char = dict(zip(danger.Dir.ALL, 'URDL'))
