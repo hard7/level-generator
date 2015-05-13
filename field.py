@@ -130,6 +130,13 @@ class Field(object):
                 f.add_object((y, x), Type.LASER, (on, off, period, dir))
         return f
 
+    def tofile(self, dst):
+        if isinstance(dst, str):
+            with open(dst, 'w') as f:
+                return self.tofile(f)
+        assert isinstance(dst, file)
+        dst.write(self.take_json())
+
     def get_danger_by_coord(self, *args):
         coord = args[0] if len(args) == 1 else args[:2]
         _dict = {d_obj.coord: d_obj for d_obj in self._danger_objects}

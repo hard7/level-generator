@@ -9,3 +9,8 @@ import operator
 
 
 
+import urllib
+import urllib2
+
+file_handle = urllib.urlopen('http://www.ya.ru')
+a = 1

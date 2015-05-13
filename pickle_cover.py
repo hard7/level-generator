@@ -33,8 +33,8 @@ def save_template_covers(_field, output_folder, answer_count):
         f.write(_field.take_json())
 
 
-def to_cover(field, count=None):
-    return list(DField(field, max_spear=14, max_answer=count))
+def to_cover(field, *args, **kwargs):               # max_spear=10 max_answer=5000
+    return list(DField(field, *args, **kwargs))
 
 
 def save_covers(inp_folder, out_folder, _count):
@@ -46,3 +46,17 @@ def save_covers(inp_folder, out_folder, _count):
         assert not os.path.exists(out)
         os.mkdir(out)
         save_template_covers(inp, out, _count)
+
+
+def dump(obj, dst):
+    if isinstance(dst, str):
+        with open(dst, 'w') as f:
+            return dump(obj, f)
+    cPickle.dump(obj, dst)
+
+
+def load(src):
+    if isinstance(src, str):
+        with open(src, 'r') as f:
+            return load(f)
+    return cPickle.load(src)
