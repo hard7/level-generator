@@ -60,3 +60,17 @@ def calc_covered_one(field, n):
         result.append(copy.deepcopy(field))
         field.load_backup()
     return result
+
+
+def covered(field, covers):
+    field.save_backup()
+    for cover in covers:
+        map(field.add_spear, cover)
+        yield field
+        field.load_backup()
+
+
+def alternative_path_lens(field):
+    s = solver.Solver(field)
+    s.run()
+    return s.alternative_path_lens()

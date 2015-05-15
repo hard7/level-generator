@@ -96,7 +96,7 @@ class Solver(object):
         else:
             return self.win_paths
 
-    def is_valid(self):
+    def make_dict_of_path_lens(self):
         ways = defaultdict(list)
         for leaf in self.leafs:
             n = lambda c=count(): c.next()
@@ -106,21 +106,27 @@ class Solver(object):
                 ways[node].append(n())
                 node = node.parent
         [var.sort() for var in ways.itervalues()]
+        return ways
 
+    def alternative_path_lens(self):
+        ways = self.make_dict_of_path_lens()
         wpath = list()
         node = self._win_nodes[0]
         while node:
             wpath.append(node)
             node = node.parent
-        wpath = wpath[::-1]
-        wpath = fn.iters.pairwise(wpath)
+
+        wpath = fn.iters.pairwise(wpath[::-1])
+        result = list()
         for parent_node, child_node in wpath:
             other_paths = ways[parent_node][:]
             [other_paths.remove(s+1) for s in ways[child_node]]
+            result.append(tuple(other_paths))
+        return tuple(result)
 
-            if other_paths and max(other_paths) > 5:
-                return False
-        return True
+    def is_valid(self):
+        apl = self.alternative_path_lens()
+        print max(*chain(apl)) > 5
 
 def path_to_str(path):
     char = dict(zip(danger.Dir.ALL, 'URDL'))
@@ -140,3 +146,7 @@ def path_to_str(path):
 
 def solve(field):
     return Solver(field).run()
+
+def solve_one(field):
+    return Solver(field).run()[0]
+

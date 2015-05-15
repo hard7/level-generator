@@ -1,16 +1,22 @@
-import scripts
 import solver
 from field import Field
 import pickle_cover
 import pickle
 from timer import Timer as T
 import os
+import scripts
+import itertools
+import matplotlib.pyplot as plt
+from cover_sort.data_processing import DataProcessing
 
 conf = dict()
-conf['path'] = '../data/f0'
+conf['path'] = '/home/anosov/data/f0'
 conf['field'] = os.path.join(conf['path'], 'field.json')
 conf['covers'] = os.path.join(conf['path'], 'covers.dump')
-
+conf['apl'] = os.path.join(conf['path'], 'apl.dump')
+conf['ans_len'] = os.path.join(conf['path'], 'ans_len.dump')
+conf['walked_spear'] = os.path.join(conf['path'], 'walked_spear.dump')
+conf['field_min_max'] =  os.path.join(conf['path'], 'field_min_max.dump')
 
 if __name__ == '__main__':
     # gen = scripts.load_template_ascii_gen_from_file('mx.tl')
@@ -18,14 +24,54 @@ if __name__ == '__main__':
     # field = fields[0]
 
     # with T():
-    #     covers_ret = pickle_cover.to_cover(field, max_spear=18, max_answer=5000)
+    #     covers_ret = pickle_cover.to_cover(field, max_spear=18, max_answer=20000)
     #     covers = [cov[1] for cov in covers_ret]
+    #
+    # with T():
+    #     with open(conf['field'], 'w') as f:
+    #         f.write(field.take_json())
+    #     pickle_cover.dump(covers, conf['covers'])
 
-    with T():
-        field = Field.load_by_json(conf['field'])
+    # with T('alternative_path_lens'):
+    #     apl = map(scripts.alternative_path_lens, scripts.covered(t_field, covers))
+    #     pickle_cover.dump(apl, conf['apl'])
+
+    # with T('ans_len'):
+    #     ans_len = map(len, itertools.imap(solver.solve_one, scripts.covered(t_field, covers)))
+    #     pickle_cover.dump(ans_len, conf['ans_len'])
+
+    # with T('walked_spear'):
+    #     sc = scripts
+    #     isec = lambda f: set(solver.solve_one(c)) & set(c.get_spear_coords())
+    #     walked_spear = [len(isec(c)) for c in sc.covered(t_field, covers)]
+    #     pickle_cover.dump(walked_spear, conf['walked_spear'])
+
+    # with T('field_min_max'):
+    #     lens = map(len, solver.solve(t_field))
+    #     field_min_max = min(lens), max(lens)
+    #     pickle_cover.dump(field_min_max, conf['field_min_max'])
+
+    with T('Load'):
+        t_field = Field.load_by_json(conf['field'])
         covers = pickle_cover.load(conf['covers'])
+        apl = pickle_cover.load(conf['apl'])
+        ans_len = pickle_cover.load(conf['ans_len'])
+        walked_spear = pickle_cover.load(conf['walked_spear'])
+        field_min_max = pickle_cover.load(conf['field_min_max'])
 
-    map(field.add_spear, covers[0])
+    with T('work'):
+        dp = DataProcessing(t_field, covers)
+        dp.solver
+        dp.alternative_path_len
+
+    """
+    Mark(len_path, spear_walked, alt_path_depth, alt_path_width)
+    """
+
+
+
+
+    # map(field.add_spear, covers[0])
 
 
         # dump = '../x.dmp'
