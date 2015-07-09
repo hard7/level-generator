@@ -1,0 +1,29 @@
+{
+  "map": [
+    "x...^x", 
+    "x.....", 
+    "x..x..", 
+    ".....x", 
+    "x.o..x"
+  ], 
+  "name": "base_test", 
+  "size": [6, 5], 
+  "symbols": [
+    {
+      "symbol": ".", 
+      "type": "EMPTY"
+    }, 
+    {
+      "symbol": "x", 
+      "type": "WALL"
+    }, 
+    {
+      "symbol": "o", 
+      "type": "START"
+    }, 
+    {
+      "symbol": "^", 
+      "type": "FINISH"
+    }
+  ]
+}

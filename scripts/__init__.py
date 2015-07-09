@@ -1,7 +1,7 @@
 __author__ = 'anosov'
 
 
-from load import load_template_ascii_gen_from_file
+from load import load_template_ascii_gen_from_file, str_file_to_one_json_field
 from init import init_template_field_by_ascii, init_correct_field_by_ascii_gen
 from save import save_fields2out
 from show import show_invalid_ascii_fields, show_path_count_for_fields

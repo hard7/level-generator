@@ -15,7 +15,7 @@ class DataProcessing(object):
     @lazy
     def solver(self):
         with Timer('solver'):
-            run = F(deepcopy) >> solver.Solver >> [_.call('run')] and fn._
+            run = F(deepcopy) >> solver.Solver >> [_.call('run')] and _
             return map(run, scripts.covered(self.field, self.covers))
 
     @lazy

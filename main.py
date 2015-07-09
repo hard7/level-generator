@@ -8,17 +8,39 @@ import scripts
 import itertools
 import matplotlib.pyplot as plt
 from cover_sort.data_processing import DataProcessing
+from functools import partial
 
-conf = dict()
-conf['path'] = '/home/anosov/data/f0'
-conf['field'] = os.path.join(conf['path'], 'field.json')
-conf['covers'] = os.path.join(conf['path'], 'covers.dump')
-conf['apl'] = os.path.join(conf['path'], 'apl.dump')
-conf['ans_len'] = os.path.join(conf['path'], 'ans_len.dump')
-conf['walked_spear'] = os.path.join(conf['path'], 'walked_spear.dump')
-conf['field_min_max'] =  os.path.join(conf['path'], 'field_min_max.dump')
+
+def add_parameter(dict_, parameter, ext='dump'):
+    root_path = dict_.setdefult('path', '/home/anosov/data/f0')
+    dict_[parameter] = os.path.join(root_path, '%s.%s' % (parameter, ext))
+
+# conf = dict()
+# add_parameter(conf, 'field', 'json')
+# add_parameter(conf, 'covers')
+# add_parameter(conf, 'apl')
+# add_parameter(conf, 'ans_len')
+# add_parameter(conf, 'walked_spear')
+# add_parameter(conf, 'field_min_max')
+
+
+# conf['field'] = os.path.join(conf['path'], 'field.json')
+# conf['covers'] = os.path.join(conf['path'], 'covers.dump')
+# conf['apl'] = os.path.join(conf['path'], 'apl.dump')
+# conf['ans_len'] = os.path.join(conf['path'], 'ans_len.dump')
+# conf['walked_spear'] = os.path.join(conf['path'], 'walked_spear.dump')
+# conf['field_min_max'] =  os.path.join(conf['path'], 'field_min_max.dump')
+
+
+def debug_making_covers():
+    base = Field.load_by_json('base_field.json')
+    print base.txt
 
 if __name__ == '__main__':
+    debug_making_covers()
+
+
+def analyze():
     # gen = scripts.load_template_ascii_gen_from_file('mx.tl')
     # fields, _ = scripts.init_correct_field_by_ascii_gen(gen)
     # field = fields[0]
