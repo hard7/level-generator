@@ -45,7 +45,10 @@ def dump_current_field_covers():
     pr_cover_paths = list()
 
     base = Field.load_by_json('base_field.json')
-    path_and_spears_group = pickle_cover.to_cover(base, max_spear=18, max_answer=100)
+
+    with T():
+        path_and_spears_group = pickle_cover.to_cover(base, max_spear=18, max_answer=1000)
+
     for path, spears in path_and_spears_group:
         new_cover = list()
         for spear in spears:
@@ -70,13 +73,11 @@ def dump_current_field_covers():
     dump_dict['covers'] = pr_covers
     dump_dict['cover_paths'] = pr_cover_paths
 
-    print dump_dict
-
-    with open('../test_covers.dump', 'w') as f:
+    with open('../test_50k_covers.dump', 'w') as f:
         cPickle.dump(dump_dict, f)
 
 if __name__ == '__main__':
-    dump_current_field_covers()
+    pass
 
 
 def analyze():
