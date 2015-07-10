@@ -1,7 +1,7 @@
 import solver
 from field import Field
 import pickle_cover
-import pickle
+import cPickle
 from timer import Timer as T
 import os
 import scripts
@@ -32,12 +32,51 @@ def add_parameter(dict_, parameter, ext='dump'):
 # conf['field_min_max'] =  os.path.join(conf['path'], 'field_min_max.dump')
 
 
-def debug_making_covers():
+def dump_current_field_covers():
+    def unique_append(list_, item):
+        if item not in list_:
+            list_.append(item)
+        return list_.index(item)
+
+    pr_periods = list()
+    pr_cells = list()
+    pr_paths = list()
+    pr_covers = list()
+    pr_cover_paths = list()
+
     base = Field.load_by_json('base_field.json')
-    print base.txt
+    path_and_spears_group = pickle_cover.to_cover(base, max_spear=18, max_answer=100)
+    for path, spears in path_and_spears_group:
+        new_cover = list()
+        for spear in spears:
+            cell, period = spear[:2], spear[2:]
+            cell_id = unique_append(pr_cells, cell)
+            period_id = unique_append(pr_periods, period)
+            new_cover.append((cell_id, period_id))
+        pr_covers.append(tuple(new_cover))
+
+        new_path = list()
+        for cell in path[0]:
+            cell_id = unique_append(pr_cells, cell)
+            new_path.append(cell_id)
+        path_id = unique_append(pr_paths, tuple(new_path))
+        pr_cover_paths.append(path_id)
+
+    dump_dict = dict()
+    dump_dict['base'] = base.take_json()
+    dump_dict['periods'] = pr_periods
+    dump_dict['cells'] = pr_cells
+    dump_dict['paths'] = pr_paths
+    dump_dict['covers'] = pr_covers
+    dump_dict['cover_paths'] = pr_cover_paths
+
+    print dump_dict
+
+    with open('../test_covers.dump', 'w') as f:
+        cPickle.dump(dump_dict, f)
 
 if __name__ == '__main__':
-    debug_making_covers()
+    dump_current_field_covers()
 
 
 def analyze():
