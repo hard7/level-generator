@@ -6,7 +6,7 @@ from timer import Timer as T
 import os
 import scripts
 import itertools
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from cover_sort.data_processing import DataProcessing
 from functools import partial
 
@@ -73,11 +73,11 @@ def dump_current_field_covers():
     dump_dict['covers'] = pr_covers
     dump_dict['cover_paths'] = pr_cover_paths
 
-    with open('../test_50k_covers.dump', 'w') as f:
+    with open('../test_1k_covers.dump', 'w') as f:
         cPickle.dump(dump_dict, f)
 
 if __name__ == '__main__':
-    pass
+    dump_current_field_covers()
 
 
 def analyze():
