@@ -93,6 +93,8 @@ class Field(object):
         self.free_cells = \
             list(product(*map(xrange, dim)))
 
+
+    # deprecated
     @staticmethod
     def load_by_json(_file):
         if isinstance(_file, str):
@@ -100,8 +102,16 @@ class Field(object):
                 return Field.load_by_json(f)
 
         assert isinstance(_file, file)
+        return Field.load(_file)
+
+    @staticmethod
+    def load(file_):
+        return Field.loads(file_.read())
+
+    @staticmethod
+    def loads(str_):
+        level = json.loads(str_, encoding='utf-8')
         symbols = dict()
-        level = json.load(_file, encoding='utf-8')
         for s in level['symbols']:
             name = s['symbol']
             symbols[name] = s
@@ -129,6 +139,12 @@ class Field(object):
                 dir = compress(Dir.ALL, s['dangerousSide'])
                 f.add_object((y, x), Type.LASER, (on, off, period, dir))
         return f
+
+    @staticmethod
+    def loadp(path_):
+        with open(path_) as f:
+            str_ = f.read()
+        return Field.loads(str_)
 
     def tofile(self, dst):
         if isinstance(dst, str):
