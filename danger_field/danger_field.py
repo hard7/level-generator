@@ -19,7 +19,8 @@ def to_list(bitarr):
 class Period(object):
     class PeriodType(type):
         def __new__(mcs, name, bases, _dict):
-            p = itertools.product(range(1, 3+1), repeat=2)
+            # p = itertools.product(range(1, 3+1), repeat=2)
+            p = ((1, 1), (1, 3), (3, 1), (2, 2))
             p = [map(lambda offset: (on, off, offset),
                      xrange(on+off)) for on, off in p]
             _dict['period'] = list(itertools.chain(*p))
