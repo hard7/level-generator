@@ -32,7 +32,9 @@ def add_parameter(dict_, parameter, ext='dump'):
 # conf['field_min_max'] =  os.path.join(conf['path'], 'field_min_max.dump')
 
 
-def dump_current_field_covers():
+_PATH = '/home/anosov/data/hard_base'
+
+def dump_current_field_covers(path_, i_):
     def unique_append(list_, item):
         if item not in list_:
             list_.append(item)
@@ -44,10 +46,10 @@ def dump_current_field_covers():
     pr_covers = list()
     pr_cover_paths = list()
 
-    base = Field.load_by_json('base_field.json')
+    base = Field.load_by_json('%s/base_%i.json' % (path_, i_))
 
     with T():
-        path_and_spears_group = pickle_cover.to_cover(base, max_spear=18, max_answer=50000)
+        path_and_spears_group = pickle_cover.to_cover(base, max_spear=20, max_answer=50000)
 
     for path, spears in path_and_spears_group:
         new_cover = list()
@@ -73,11 +75,20 @@ def dump_current_field_covers():
     dump_dict['covers'] = pr_covers
     dump_dict['cover_paths'] = pr_cover_paths
 
-    with open('../test_50k_covers_for_4_phases.dump', 'w') as f:
+    with open('%s/covers/case_%i.dump' % (path_, i_), 'w') as f:
         cPickle.dump(dump_dict, f)
 
+def show_count_paths(path_, i_):
+    base = Field.load_by_json('/home/anosov/data/hard_base/base_%i.json' % (i_, ))
+    with T():
+        res = solver.solve(base)
+    print len(res)
+
 if __name__ == '__main__':
-    dump_current_field_covers()
+    i_ = 14
+    show_count_paths(_PATH, i_)
+    # dump_current_field_covers(_PATH, i_)
+
 
 
 def analyze():
