@@ -53,6 +53,7 @@ def find_crossing_cells(paths, indexes=None):
         paths = [paths[i] for i in indexes]
     return list(reduce(lambda res, x: set(res)-set(x), paths))
 
+# def x_map(*ar, **kw): return map(*ar, **kw)
 
 class Solver(object):
     def __init__(self, field):
@@ -70,7 +71,7 @@ class Solver(object):
         self.leafs = []
 
         self._traveled_path = dict()  # of tuple of coordinates
-        self._traveled_path[self.root] = (self.root.coord, )
+        self._traveled_path[id(self.root)] = (self.root.coord, )
 
     def run(self, t=1):
         assert t < 100
@@ -80,28 +81,37 @@ class Solver(object):
         # is_not_in_path = lambda arg: arg not in self._traveled_path[cur]
 
         self.field.set_time(t)
+
+
         for cur in self.cursor_nodes:
-            # available_coords = filter(is_not_in_path, avc(cur.coord))
+                # available_coords = filter(is_not_in_path, avc(cur.coord))
 
-            contains = partial(op.contains, self._traveled_path[cur])  # op.contains(a, b) some as: b in a
+
+            contains = partial(op.contains, self._traveled_path[id(cur)])  # op.contains(a, b) some as: b in a
             available_coords = ifilterfalse(contains, avc(cur.coord))
+            make_node = partial(Node, cur)
 
-            children = [Node(cur, c) for c in available_coords]
-            cur.children = children
-            future_leafs.extend(children)
-            self.move_count += len(children)
 
-            for child in children:
-                self._traveled_path[child] = self._traveled_path[child.parent] + (child.coord, )
+            cur.children = map(make_node, available_coords)
+            future_leafs.extend(cur.children)
 
-            if not children:
+            self.move_count += len(cur.children)
+
+
+            for child in cur.children:
+                self._traveled_path[id(child)] = self._traveled_path[id(child.parent)] + (child.coord, )
+
+
+            if not cur.children:
                 self.leafs.append(cur)
+
+
 
         self.cursor_nodes = []
         for future_leaf in future_leafs:
             if future_leaf.coord == self.field.finish:
                 # self.win_paths.append(future_leaf.path())
-                self.win_paths.append(self._traveled_path[future_leaf])
+                self.win_paths.append(self._traveled_path[id(future_leaf)])
 
                 self._win_nodes.append(future_leaf)
                 self.leafs.append(future_leaf)
@@ -125,7 +135,7 @@ class Solver(object):
 
         for leaf in self.leafs:
             ways[leaf.coord] = list()
-            path = self._traveled_path[leaf.parent]
+            path = self._traveled_path[id(leaf.parent)]
             for i, cell in enumerate(reversed(path), start=1):
                 ways[cell].append(i)
 
