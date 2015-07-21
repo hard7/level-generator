@@ -1,11 +1,13 @@
 __author__ = 'anosov'
 
 from field import Field
-from itertools import combinations, count, chain
+from itertools import combinations, count, chain, ifilterfalse
 import danger
 import operator as op
 from collections import defaultdict
+from functools import partial
 import fn
+
 
 class Node:
     def __init__(self, parent, coord):
@@ -67,25 +69,40 @@ class Solver(object):
         self.move_count = 0
         self.leafs = []
 
+        self._traveled_path = dict()  # of tuple of coordinates
+        self._traveled_path[self.root] = (self.root.coord, )
+
     def run(self, t=1):
         assert t < 100
         future_leafs = []
         avc = self.field.available_for_move
-        not_in_path = lambda arg: arg not in cur.path()
+        # not_in_path = lambda arg: arg not in cur.path()
+        # is_not_in_path = lambda arg: arg not in self._traveled_path[cur]
+
         self.field.set_time(t)
         for cur in self.cursor_nodes:
-            available_coords = filter(not_in_path, avc(cur.coord))
+            # available_coords = filter(is_not_in_path, avc(cur.coord))
+
+            contains = partial(op.contains, self._traveled_path[cur])  # op.contains(a, b) some as: b in a
+            available_coords = ifilterfalse(contains, avc(cur.coord))
+
             children = [Node(cur, c) for c in available_coords]
             cur.children = children
             future_leafs.extend(children)
             self.move_count += len(children)
+
+            for child in children:
+                self._traveled_path[child] = self._traveled_path[child.parent] + (child.coord, )
+
             if not children:
                 self.leafs.append(cur)
 
         self.cursor_nodes = []
         for future_leaf in future_leafs:
             if future_leaf.coord == self.field.finish:
-                self.win_paths.append(future_leaf.path())
+                # self.win_paths.append(future_leaf.path())
+                self.win_paths.append(self._traveled_path[future_leaf])
+
                 self._win_nodes.append(future_leaf)
                 self.leafs.append(future_leaf)
             else:
@@ -98,13 +115,20 @@ class Solver(object):
 
     def make_dict_of_path_lens(self):
         ways = defaultdict(list)
+        # for leaf in self.leafs:
+        #     n = lambda c=count(): c.next()
+        #     ways[leaf].append(n())
+        #     node = leaf.parent
+        #     while node:
+        #         ways[node].append(n())
+        #         node = node.parent
+
         for leaf in self.leafs:
-            n = lambda c=count(): c.next()
-            ways[leaf].append(n())
-            node = leaf.parent
-            while node:
-                ways[node].append(n())
-                node = node.parent
+            ways[leaf.coord] = list()
+            path = self._traveled_path[leaf.parent]
+            for i, cell in enumerate(reversed(path), start=1):
+                ways[cell].append(i)
+
         [var.sort() for var in ways.itervalues()]
         return ways
 
